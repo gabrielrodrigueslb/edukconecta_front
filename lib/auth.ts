@@ -36,7 +36,7 @@ interface loginRequestParams {
   password: string;
 }
 
-function tenantHeaders() {
+function tenantHeaders(): Record<string, string> {
   const slug = process.env.NEXT_PUBLIC_TENANT_SLUG;
   return slug ? { 'x-tenant': slug } : {};
 }
