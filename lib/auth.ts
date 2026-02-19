@@ -14,6 +14,7 @@ export interface TenantInfo {
   name: string;
   slug: string;
   active?: boolean;
+  defaultAvatarUrl?: string | null;
 }
 
 export interface SessionData {
