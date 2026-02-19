@@ -1,0 +1,894 @@
+﻿'use client'
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import {
+  UserPlus,
+  Users,
+  Upload,
+  Grid3x3,
+  List,
+  MoreVertical,
+  Eye,
+  Trash2,
+  CalendarCheck,
+  Search,
+  Filter,
+  X,
+} from 'lucide-react'
+
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import PageTitle from '@/components/page-title'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+
+import ImportStudentsModal from '@/components/alunos/ImportStudentsModal'
+import NewStudentModal from '@/components/alunos/NewStudentModal'
+import { StudentsService, StudentPayload, StudentResponse } from '@/services/students.service'
+
+type Guardian = {
+  is_primary: boolean
+  full_name: string
+  cpf: string
+  relationship: string
+  phone: string
+  email: string
+  address?: string
+  notes?: string
+}
+
+type Student = {
+  id: string
+  full_name: string
+  foto_aluno?: string
+  birth_date: string
+  grade: string
+  shift: string
+  status: 'Ativo' | 'Inativo'
+  performance_indicator: string
+  difficulty_subjects: string[]
+
+  origin_school?: string
+  cpf: string
+  address: string
+
+  allergies?: string
+  blood_type?: string
+  medical_reports?: string
+  medications?: string
+  behavior_notes?: string
+
+  difficulty_reaction?: string
+  previous_tutoring?: null | boolean
+
+  guardians?: Guardian[]
+  created_at?: string
+}
+
+type StudentData = {
+  full_name: string
+  birth_date: string
+  grade: string
+  shift: string
+  origin_school: string
+  cpf: string
+  address: string
+  status: 'Ativo' | 'Inativo'
+
+  allergies: string
+  blood_type: string
+  medical_reports: string
+  medications: string
+  behavior_notes: string
+
+  difficulty_subjects: string[]
+  difficulty_reaction: string
+  previous_tutoring: null | boolean
+
+  performance_indicator: string
+}
+
+type Filters = {
+  search: string
+  grade: string
+  shift: string
+  status: string
+  difficulty: string
+}
+
+const createPageUrl = (path: string) => `/main/alunos/${path}`
+
+const ALL = '__all__'
+
+const grades = [
+  '1º Ano','2º Ano','3º Ano','4º Ano','5º Ano','6º Ano','7º Ano','8º Ano','9º Ano','1º EM','2º EM','3º EM',
+]
+const shifts = ['Manhã', 'Tarde']
+const relationships = ['Pai','Mãe','Avó','Avô','Tio(a)','Irmão(ã)','Responsável Legal','Outro']
+const bloodTypes = ['A+','A-','B+','B-','AB+','AB-','O+','O-','Não informado']
+const subjects = ['Português','Matemática','Ciências','História','Geografia','Inglês','Artes','Ed. Fí­sica']
+
+const performanceColors: Record<string, string> = {
+  Melhorando: 'bg-emerald-100 text-emerald-700',
+  Atencao: 'bg-amber-100 text-amber-700',
+  Decaindo: 'bg-rose-100 text-rose-700',
+  'Não avaliado': 'bg-slate-100 text-slate-600',
+}
+
+function calculateAge(birthDate: string) {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  if (Number.isNaN(birth.getTime())) return null
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
+  return age
+}
+
+function sortStudentsByName(list: Student[]) {
+  return [...list].sort((a, b) =>
+    (a.full_name || '').localeCompare(b.full_name || '', 'pt-BR', { sensitivity: 'base' })
+  )
+}
+
+export default function Students() {
+  const [students, setStudents] = useState<Student[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [deleteStudent, setDeleteStudent] = useState<Student | null>(null)
+
+  const [filters, setFilters] = useState<Filters>({
+    search: '',
+    grade: '',
+    shift: '',
+    status: '',
+    difficulty: '',
+  })
+
+  const [pageSize, setPageSize] = useState(15)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  // ===== NEW STUDENT STATES =====
+  const [activeTab, setActiveTab] = useState('data')
+  const [hasGuardian2, setHasGuardian2] = useState(false)
+
+  const [studentData, setStudentData] = useState<StudentData>({
+    full_name: '',
+    birth_date: '',
+    grade: '',
+    shift: '',
+    origin_school: '',
+    cpf: '',
+    address: '',
+    status: 'Ativo',
+
+    allergies: '',
+    blood_type: 'Não informado',
+    medical_reports: '',
+    medications: '',
+    behavior_notes: '',
+
+    difficulty_subjects: [] as string[],
+    difficulty_reaction: '',
+    previous_tutoring: null as null | boolean,
+
+    performance_indicator: 'Não avaliado',
+  })
+
+  const [guardian1, setGuardian1] = useState<Guardian>({
+    is_primary: true,
+    full_name: '',
+    cpf: '',
+    relationship: '',
+    phone: '',
+    email: '',
+    address: '',
+  })
+
+  const [guardian2, setGuardian2] = useState<Guardian>({
+    is_primary: false,
+    full_name: '',
+    cpf: '',
+    relationship: '',
+    phone: '',
+    email: '',
+    notes: '',
+  })
+
+  const [isSaving, setIsSaving] = useState(false)
+
+  const resetNewForm = useCallback(() => {
+    setStudentData({
+      full_name: '',
+      birth_date: '',
+      grade: '',
+      shift: '',
+      origin_school: '',
+      cpf: '',
+      address: '',
+      status: 'Ativo',
+
+      allergies: '',
+      blood_type: 'Não informado',
+      medical_reports: '',
+      medications: '',
+      behavior_notes: '',
+
+      difficulty_subjects: [],
+      difficulty_reaction: '',
+      previous_tutoring: null,
+
+      performance_indicator: 'Não avaliado',
+    })
+
+    setGuardian1({
+      is_primary: true,
+      full_name: '',
+      cpf: '',
+      relationship: '',
+      phone: '',
+      email: '',
+      address: '',
+    })
+
+    setGuardian2({
+      is_primary: false,
+      full_name: '',
+      cpf: '',
+      relationship: '',
+      phone: '',
+      email: '',
+      notes: '',
+    })
+
+    setHasGuardian2(false)
+    setActiveTab('data')
+  }, [])
+
+  const fetchStudents = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await StudentsService.list()
+      setStudents(sortStudentsByName(data as Student[]))
+    } catch {
+      toast.error('Não foi possí­vel carregar alunos')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchStudents()
+  }, [fetchStudents])
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((student) => {
+      if (filters.search && !student.full_name?.toLowerCase().includes(filters.search.toLowerCase())) return false
+      if (filters.grade && student.grade !== filters.grade) return false
+      if (filters.shift && student.shift !== filters.shift) return false
+      if (filters.status && student.status !== filters.status) return false
+      if (filters.difficulty && !student.difficulty_subjects?.includes(filters.difficulty)) return false
+      return true
+    })
+  }, [students, filters])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filters, pageSize])
+
+  const totalItems = filteredStudents.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIndex = totalItems === 0 ? 0 : (safePage - 1) * pageSize
+  const endIndex = Math.min(startIndex + pageSize, totalItems)
+  const pagedStudents = useMemo(
+    () => filteredStudents.slice(startIndex, endIndex),
+    [filteredStudents, startIndex, endIndex]
+  )
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages])
+
+  const handleDeleteStudent = useCallback(async () => {
+    if (!deleteStudent) return
+    const id = deleteStudent.id
+    try {
+      await StudentsService.delete(id)
+      setStudents((prev) => prev.filter((s) => s.id !== id))
+      toast.success('Aluno excluí­do com sucesso')
+    } catch {
+      toast.error('Nío foi possível excluir o aluno')
+    } finally {
+      setDeleteStudent(null)
+    }
+  }, [deleteStudent])
+
+  const toggleSubject = useCallback((subject: string) => {
+    setStudentData((prev) => {
+      const current = prev.difficulty_subjects || []
+      const updated = current.includes(subject)
+        ? current.filter((s) => s !== subject)
+        : [...current, subject]
+      return { ...prev, difficulty_subjects: updated }
+    })
+  }, [])
+
+  const handleSaveStudent = useCallback(async () => {
+    if (!studentData.full_name || !studentData.birth_date || !studentData.grade || !studentData.shift) {
+      toast.error('Preencha todos os campos obrigatórios na aba "Dados"')
+      setActiveTab('data')
+      return
+    }
+
+    if (!studentData.cpf || !studentData.address) {
+      toast.error('Preencha CPF e endereço do aluno')
+      setActiveTab('data')
+      return
+    }
+
+    if (!guardian1.full_name || !guardian1.phone || !guardian1.relationship || !guardian1.cpf) {
+      toast.error('Preencha os dados do responsável principal')
+      setActiveTab('guardians')
+      return
+    }
+
+    if (hasGuardian2 && (!guardian2.full_name || !guardian2.phone || !guardian2.relationship || !guardian2.cpf)) {
+      toast.error('Preencha os dados do responsável 2 ou desative a opção')
+      setActiveTab('guardians')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const payload: StudentPayload = {
+        ...studentData,
+        guardians: hasGuardian2 ? [guardian1, guardian2] : [guardian1],
+      }
+
+      const newStudent = (await StudentsService.create(payload)) as StudentResponse
+      setStudents((prev) => sortStudentsByName([newStudent as Student, ...prev]))
+      toast.success('Aluno cadastrado com sucesso!')
+      setShowNewModal(false)
+      resetNewForm()
+    } catch {
+      toast.error('Erro ao salvar aluno')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [studentData, guardian1, guardian2, hasGuardian2, resetNewForm])
+
+  const clearFilters = useCallback(() => {
+    setFilters({ search: '', grade: '', shift: '', status: '', difficulty: '' })
+  }, [])
+
+  const hasAnyFilter = useMemo(() => {
+    return Object.values(filters).some(Boolean)
+  }, [filters])
+
+  // Helper: quando o Select voltar ALL, vira '' no estado
+  const toFilterValue = (v: string) => (v === ALL ? '' : v)
+
+  return (
+    <div className="space-y-5 animate-in fade-in duration-150">
+      {/* Header (premium + responsivo) */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <PageTitle
+            title="Alunos"
+            className="text-2xl lg:text-3xl font-bold text-slate-800"
+          />
+          <p className="text-slate-500">{students.length} alunos cadastrados</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowImportModal(true)}
+            className="h-11 px-4 rounded-xl justify-center"
+          >
+            <Upload className="w-5 h-5 mr-2" />
+            Importar
+          </Button>
+
+          <Button
+            onClick={() => { resetNewForm(); setShowNewModal(true) }}
+            className="h-11 px-4 rounded-xl justify-center bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) hover:from-(--brand-gradient-from-hover) hover:to-(--brand-gradient-to-hover) text-white shadow-lg shadow-indigo-200"
+          >
+            <UserPlus className="w-5 h-5 mr-2" />
+            Novo Aluno
+          </Button>
+        </div>
+      </div>
+
+      {/* Painel de Filtros (corrige quebra do mobile) */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <div className="p-4 sm:p-5 space-y-4">
+          {/* Search */}
+          <div className="flex flex-row lg:flex-row lg:items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                value={filters.search}
+                onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+                placeholder="Buscar aluno por nome..."
+                className="h-11 pl-10 rounded-xl"
+              />
+            </div>
+
+            <div className="flex items-center justify-between lg:justify-end gap-2">
+              {/* View toggle */}
+              <div className="flex gap-1 bg-slate-50 rounded-xl p-1 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'h-9 w-9 grid place-items-center rounded-lg transition-colors',
+                    viewMode === 'grid'
+                      ? 'bg-white shadow-sm text-indigo-600'
+                      : 'text-slate-500 hover:text-slate-700'
+                  )}
+                  aria-label="Visualização em grade"
+                >
+                  <Grid3x3 className="w-5 h-5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'h-9 w-9 grid place-items-center rounded-lg transition-colors',
+                    viewMode === 'list'
+                      ? 'bg-white shadow-sm text-indigo-600'
+                      : 'text-slate-500 hover:text-slate-700'
+                  )}
+                  aria-label="Visualização em lista"
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+          </div>
+              {hasAnyFilter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="h-10 rounded-xl w-full"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Limpar
+                </Button>
+              )}
+
+          {/* Selects */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Filter className="w-3.5 h-3.5" />
+                Série
+              </div>
+              <Select
+                value={filters.grade || ALL}
+                onValueChange={(v) => setFilters((p) => ({ ...p, grade: toFilterValue(v) }))}
+              >
+                <SelectTrigger className="h-11 rounded-xl w-full">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todas</SelectItem>
+                  {grades.map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs text-slate-500">Turno</div>
+              <Select
+                value={filters.shift || ALL}
+                onValueChange={(v) => setFilters((p) => ({ ...p, shift: toFilterValue(v) }))}
+              >
+                <SelectTrigger className="h-11 rounded-xl w-full">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {shifts.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs text-slate-500">Situação</div>
+              <Select
+                value={filters.status || ALL}
+                onValueChange={(v) => setFilters((p) => ({ ...p, status: toFilterValue(v) }))}
+              >
+                <SelectTrigger className="h-11 rounded-xl w-full">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todas</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs text-slate-500">Dificuldade</div>
+              <Select
+                value={filters.difficulty || ALL}
+                onValueChange={(v) => setFilters((p) => ({ ...p, difficulty: toFilterValue(v) }))}
+              >
+                <SelectTrigger className="h-11 rounded-xl w-full">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todas</SelectItem>
+                  {subjects.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-slate-500">
+          {totalItems === 0
+            ? 'Nenhum aluno para exibir'
+            : `Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} alunos`}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">Por página</span>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-9 w-24 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[15, 30, 50, 100].map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          
+        </div>
+      </div>
+
+      {/* Students Display */}
+      {isLoading ? (
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-2'}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className={viewMode === 'grid' ? 'h-48 rounded-2xl' : 'h-20 rounded-xl'} />
+          ))}
+        </div>
+      ) : filteredStudents.length === 0 ? (
+        <div className="text-center py-14 bg-white rounded-2xl border border-slate-100">
+          <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+          <h3 className="text-lg font-medium text-slate-600 mb-2">Nenhum aluno encontrado</h3>
+          <p className="text-slate-500 mb-6">
+            {hasAnyFilter ? 'Tente ajustar os filtros' : 'Comece cadastrando seu primeiro aluno'}
+          </p>
+
+          {!hasAnyFilter && (
+            <Button
+              onClick={() => { resetNewForm(); setShowNewModal(true) }}
+              className="bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) h-11 rounded-xl"
+            >
+              <UserPlus className="w-5 h-5 mr-2" />
+              Cadastrar Aluno
+            </Button>
+          )}
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid justify-center grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {pagedStudents.map((student) => {
+            const age = calculateAge(student.birth_date)
+
+            return (
+              <div
+                key={student.id}
+                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-linear-to-br from-(--brand-gradient-from-light) to-(--brand-gradient-to-light) flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200 overflow-hidden shrink-0">
+                      {student.foto_aluno ? (
+                        <Image
+                          src={student.foto_aluno || '/globo.png'}
+                          className="object-cover w-full h-full"
+                          alt={student.full_name || 'Foto do aluno'}
+                          width={56}
+                          height={56}
+                          unoptimized
+                        />
+                      ) : (
+                        <span>{student.full_name?.charAt(0)?.toUpperCase()}</span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-slate-800 truncate">{student.full_name}</h3>
+                      <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-slate-500">
+                        <span className="truncate">{student.grade}</span>
+                        {age !== null && <span className="shrink-0">{age} anos</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors shrink-0 cursor-pointer">
+                        <MoreVertical className="w-5 h-5 text-slate-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link href={createPageUrl(`${student.id}`)} className="flex items-center gap-2 cursor-pointer">
+                          <Eye className="w-4 h-4 " />
+                          Ver Ficha
+                        </Link>
+                      </DropdownMenuItem>
+
+                      
+
+                      <DropdownMenuItem className="text-rose-600 focus:text-rose-600 cursor-pointer" onClick={() => setDeleteStudent(student)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-4">
+                  <Badge variant="outline" className="bg-slate-50 rounded-full">{student.shift}</Badge>
+                  <Badge className={cn('font-medium rounded-full', performanceColors[student.performance_indicator] || performanceColors['Não avaliado'])}>
+                    {student.performance_indicator || 'Não avaliado'}
+                  </Badge>
+                  {student.status === 'Inativo' && <Badge className="bg-slate-200 text-slate-600 rounded-full">Inativo</Badge>}
+                </div>
+
+                {student.difficulty_subjects?.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <p className="text-xs text-slate-500 mb-2">Dificuldades:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {student.difficulty_subjects.slice(0, 3).map((subject, i) => (
+                        <span key={i} className="text-xs px-2 py-1 bg-rose-50 text-rose-600 rounded-full">
+                          {subject}
+                        </span>
+                      ))}
+                      {student.difficulty_subjects.length > 3 && (
+                        <span className="text-xs px-2 py-1 bg-slate-100 text-slate-500 rounded-full">
+                          +{student.difficulty_subjects.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden block">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Aluno</TableHead>
+                <TableHead>Série</TableHead>
+                <TableHead>Turno</TableHead>
+                <TableHead>Desempenho</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {pagedStudents.map((student) => {
+                const age = calculateAge(student.birth_date)
+
+                return (
+                  <TableRow key={student.id} className="hover:bg-slate-50">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-(--brand-gradient-from-light) to-(--brand-gradient-to-light) flex items-center justify-center text-white font-bold overflow-hidden">
+                          {student.foto_aluno ? (
+                            <Image
+                              src={student.foto_aluno}
+                              className="object-cover w-full h-full"
+                              alt={student.full_name || 'Foto do aluno'}
+                              width={40}
+                              height={40}
+                              unoptimized
+                            />
+                          ) : (
+                            <span>{student.full_name?.charAt(0)?.toUpperCase()}</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <p className="font-medium text-slate-800">{student.full_name}</p>
+                          {age !== null && <p className="text-sm text-slate-500">{age} anos</p>}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>{student.grade}</TableCell>
+                    <TableCell>{student.shift}</TableCell>
+
+                    <TableCell>
+                      <Badge className={cn(performanceColors[student.performance_indicator] || performanceColors['Não avaliado'])}>
+                        {student.performance_indicator || 'Não avaliado'}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 hover:bg-slate-100 rounded-lg">
+                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                          </button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={createPageUrl(`${student.id}`)} className="flex items-center gap-2">
+                              <Eye className="w-4 h-4" />
+                              Ver Ficha
+                            </Link>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem className="text-rose-600" onClick={() => setDeleteStudent(student)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+            
+          </Table>
+          
+        </div>
+        
+      )}
+
+      <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              className="h-9 rounded-xl"
+              disabled={safePage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-slate-500">
+              {safePage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              className="h-9 rounded-xl"
+              disabled={safePage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Próxima
+            </Button>
+          </div>
+
+      {/* New Student Modal */}
+      <NewStudentModal
+        open={showNewModal}
+        onOpenChange={(open) => {
+          setShowNewModal(open)
+          if (!open) resetNewForm()
+        }}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        studentData={studentData}
+        setStudentData={setStudentData}
+        guardian1={guardian1}
+        setGuardian1={setGuardian1}
+        guardian2={guardian2}
+        setGuardian2={setGuardian2}
+        hasGuardian2={hasGuardian2}
+        setHasGuardian2={setHasGuardian2}
+        grades={grades}
+        shifts={shifts}
+        relationships={relationships}
+        bloodTypes={bloodTypes}
+        subjects={subjects}
+        toggleSubject={toggleSubject}
+        onSave={handleSaveStudent}
+        isSaving={isSaving}
+      />
+
+      {/* Import Modal */}
+      <ImportStudentsModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        templateHref="/templates/Modelo_Importacao_Alunos.xlsx"
+        onImported={(newStudents: StudentResponse[]) => {
+          setStudents((prev) => sortStudentsByName([...(newStudents as Student[]), ...prev]))
+          toast.success('Alunos importados com sucesso!')
+        }}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteStudent} onOpenChange={() => setDeleteStudent(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o aluno <strong>{deleteStudent?.full_name}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-rose-500 hover:bg-rose-600" onClick={handleDeleteStudent}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
