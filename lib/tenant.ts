@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from './apiBase'
 import { withUploadsBase } from './uploads'
+import { getTenantHeaders } from './tenantSlug'
 
 export type TenantPublic = {
   id: string
@@ -23,6 +24,9 @@ export async function getTenantPublic(): Promise<TenantPublic | null> {
     inflight = fetch(`${base}/tenant/public`, {
       method: 'GET',
       credentials: 'include',
+      headers: {
+        ...getTenantHeaders(),
+      },
     })
       .then(async (res) => {
         if (!res.ok) return null

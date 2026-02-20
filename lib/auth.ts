@@ -1,4 +1,5 @@
 ﻿import { getApiBaseUrl } from './apiBase';
+import { getTenantHeaders } from './tenantSlug';
 
 export interface SessionUser {
   id: string;
@@ -36,11 +37,6 @@ interface loginRequestParams {
   password: string;
 }
 
-function tenantHeaders(): Record<string, string> {
-  const slug = process.env.NEXT_PUBLIC_TENANT_SLUG;
-  return slug ? { 'x-tenant': slug } : {};
-}
-
 export async function loginRequest({
   email,
   password,
@@ -50,7 +46,7 @@ export async function loginRequest({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...tenantHeaders(),
+      ...getTenantHeaders(),
     },
     credentials: 'include',
     body: JSON.stringify({ email, password }),
@@ -70,7 +66,7 @@ export async function getSession(): Promise<SessionData | null> {
     method: 'GET',
     credentials: 'include',
     headers: {
-      ...tenantHeaders(),
+      ...getTenantHeaders(),
     },
   });
 
@@ -89,7 +85,7 @@ export async function logoutRequest() {
     method: 'POST',
     credentials: 'include',
     headers: {
-      ...tenantHeaders(),
+      ...getTenantHeaders(),
     },
   });
 }
