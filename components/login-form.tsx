@@ -157,7 +157,6 @@ export function LoginForm({
                 src={bannerSrc}
                 alt="Image"
                 priority
-                fill
                 sizes="(min-width: 768px) 50vw, 100vw"
                 className="absolute inset-0 object-cover dark:brightness-[0.2] dark:grayscale"
               />
