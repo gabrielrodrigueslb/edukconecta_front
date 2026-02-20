@@ -42,3 +42,22 @@ export function resolveTenantAsset(url?: string | null) {
   if (!url) return undefined
   return withUploadsBase(url)
 }
+
+
+export function resolveTenantSlug(): string | null {
+  const envSlug = process.env.NEXT_PUBLIC_TENANT_SLUG
+  if(envSlug) return envSlug
+
+  if (typeof window === 'undefined') return null
+
+  const host = window.location.hostname.toLocaleLowerCase()
+  if(host === 'edukconecta.com' || host === 'www.edukconecta.com' || host.startsWith('api.')) return null
+  
+  if(host.endsWith('.edukconecta.com')) {
+    const subdomain = host.split('.')[0]
+    return subdomain || null
+  }
+
+  return null
+
+}
