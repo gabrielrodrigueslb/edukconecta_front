@@ -42,6 +42,14 @@ export async function getTenantPublic(): Promise<TenantPublic | null> {
   return inflight
 }
 
+export function setTenantPublicCache(tenant: TenantPublic | null) {
+  tenantCache = tenant
+}
+
+export function clearTenantPublicCache() {
+  tenantCache = null
+}
+
 export function resolveTenantAsset(url?: string | null) {
   if (!url) return undefined
   return withUploadsBase(url)

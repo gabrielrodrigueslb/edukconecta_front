@@ -16,43 +16,38 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { loginRequest } from '@/lib/auth';
 import { X } from 'lucide-react';
-import { getTenantPublic, resolveTenantAsset, type TenantPublic } from '@/lib/tenant';
+import { getTenantPublic, resolveTenantAsset, setTenantPublicCache, type TenantPublic } from '@/lib/tenant';
 
 export function LoginForm({
   className,
+  initialTenant,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<'div'> & { initialTenant?: TenantPublic | null }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [openModal, SetOpenModal] = useState(false);
   const [error, setError] = useState('');
-  const [tenant, setTenant] = useState<TenantPublic | null>(null);
+  const [tenant, setTenant] = useState<TenantPublic | null>(initialTenant ?? null);
 
   useEffect(() => {
     let mounted = true;
+    if (initialTenant) {
+      setTenantPublicCache(initialTenant);
+    }
     getTenantPublic()
       .then((data) => {
-        if (mounted) setTenant(data);
+        if (mounted && data) {
+          setTenant(data);
+          setTenantPublicCache(data);
+        }
       })
       .catch(() => null);
     return () => {
       mounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const favicon = resolveTenantAsset(tenant?.faviconUrl);
-    if (!favicon) return;
-    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.href = favicon;
-  }, [tenant?.faviconUrl]);
+  }, [initialTenant]);
 
   const logoSrc = resolveTenantAsset(tenant?.logoUrl) || '/logo-dri.png';
   const bannerSrc =
@@ -90,7 +85,6 @@ export function LoginForm({
     SetOpenModal(!openModal);
   }
 
-  console.log('Tenant:', tenant);
 
   return (
     <>

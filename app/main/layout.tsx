@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import MainShell from '@/components/main-shell';
+import { getTenantPublicServer } from '@/lib/tenantServer';
 
 export default async function MainLayout({
   children,
@@ -14,5 +15,6 @@ export default async function MainLayout({
     redirect('/');
   }
 
-  return <MainShell>{children}</MainShell>;
+  const tenantPublic = await getTenantPublicServer();
+  return <MainShell initialTenantPublic={tenantPublic}>{children}</MainShell>;
 }

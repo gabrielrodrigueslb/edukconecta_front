@@ -12,7 +12,7 @@ import {
   type AdminTenant,
   type AdminUser,
 } from '@/lib/admin';
-import { resolveTenantAsset } from '@/lib/tenant';
+import { resolveTenantAsset, setTenantPublicCache } from '@/lib/tenant';
 import {
   Users,
   UserPlus,
@@ -283,6 +283,17 @@ export default function AdminPage() {
       const updated = await updateCurrentTenant(formData);
       setTenant(updated);
       setTenantName(updated.name || tenantName);
+      setTenantPublicCache({
+        id: updated.id,
+        name: updated.name,
+        slug: updated.slug,
+        active: updated.active,
+        logoUrl: updated.logoUrl ?? null,
+        loginBannerUrl: updated.loginBannerUrl ?? null,
+        faviconUrl: updated.faviconUrl ?? null,
+        defaultAvatarUrl: updated.defaultAvatarUrl ?? null,
+        themeColor: updated.themeColor ?? null,
+      });
       setLogoPreview(null);
       setAvatarPreview(null);
       setBannerPreview(null);

@@ -36,15 +36,19 @@ import {
 export default function Sidebar({
   open,
   onOpenChange,
+  initialTenantPublic,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTenantPublic?: TenantPublic | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
-  const [tenantPublic, setTenantPublic] = useState<TenantPublic | null>(null);
+  const [tenantPublic, setTenantPublic] = useState<TenantPublic | null>(
+    initialTenantPublic ?? null,
+  );
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [openModalLogout, setOpenModalLogout] = useState(false);
 
@@ -68,8 +72,8 @@ export default function Sidebar({
           setTenant(session.tenant ?? null);
         }
 
-        if (mounted) {
-          setTenantPublic(publicTenant ?? null);
+        if (mounted && publicTenant) {
+          setTenantPublic(publicTenant);
         }
       } catch {
         console.log('Erro ao buscar dados do usuario');
@@ -87,20 +91,6 @@ export default function Sidebar({
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    const favicon = resolveTenantAsset(tenantPublic?.faviconUrl);
-    if (!favicon) return;
-    let link = document.querySelector("link[rel~='icon']") as
-      | HTMLLinkElement
-      | null;
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.href = favicon;
-  }, [tenantPublic?.faviconUrl]);
 
   const avatarSrc = withUploadsBase(user?.avatarUrl);
   const fallbackAvatar =
@@ -153,7 +143,7 @@ export default function Sidebar({
             </div>
             <div>
               <h1 className="font-bold text-sidebar-primary-foreground">
-                {tenantPublic?.name || tenant?.name || 'Adriana Oliveira'}
+                {tenantPublic?.name || tenant?.name || ''}
               </h1>
               <p className="text-xs text-muted-foreground">Sistema de Gestao</p>
             </div>
