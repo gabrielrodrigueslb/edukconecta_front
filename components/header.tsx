@@ -58,6 +58,8 @@ export default function Header({
         return 'Alunos';
       case 'profile':
         return 'Meu Perfil';
+      case 'admin':
+        return 'Administração';
       default:
         return key.charAt(0).toUpperCase() + key.slice(1);
     }

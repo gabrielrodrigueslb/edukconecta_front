@@ -31,7 +31,7 @@ import { logoutRequest } from '@/lib/auth';
 import { withUploadsBase } from '@/lib/uploads';
 import { useRouter } from 'next/navigation';
 import LogoutModal from './logoutModal';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export function NavUser({
@@ -51,7 +51,13 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const avatarSrc = withUploadsBase(user.avatarUrl);
   const fallbackAvatar = withUploadsBase(tenantDefaultAvatarUrl) || '/profile/tedio.png';
-  const resolvedAvatar = avatarSrc || fallbackAvatar;
+  const [resolvedAvatar, setResolvedAvatar] = useState<string>(
+    avatarSrc || fallbackAvatar,
+  );
+
+  useEffect(() => {
+    setResolvedAvatar(avatarSrc || fallbackAvatar);
+  }, [avatarSrc, fallbackAvatar]);
 
   const toggleModalLogout = () => {
     setOpenModalLogout(!openModalLogout);
@@ -79,6 +85,11 @@ export function NavUser({
                     className="animate-in fade-in duration-50"
                     src={resolvedAvatar}
                     alt={user.name}
+                    onError={() => {
+                      if (resolvedAvatar !== fallbackAvatar) {
+                        setResolvedAvatar(fallbackAvatar);
+                      }
+                    }}
                   />
                   <AvatarFallback className="rounded-lg">
                     <Image
@@ -102,7 +113,15 @@ export function NavUser({
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-10 w-10 rounded-full">
-                    <AvatarImage src={resolvedAvatar} alt={user.name} />
+                    <AvatarImage
+                      src={resolvedAvatar}
+                      alt={user.name}
+                      onError={() => {
+                        if (resolvedAvatar !== fallbackAvatar) {
+                          setResolvedAvatar(fallbackAvatar);
+                        }
+                      }}
+                    />
                     <AvatarFallback className="rounded-lg overflow-hidden">
                       <Image
                         src={fallbackAvatar}

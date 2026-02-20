@@ -10,7 +10,7 @@ export function getApiBaseUrl() {
   if (explicit) return explicit
 
   if (process.env.NODE_ENV === 'production') {
-    return '/api'
+    return 'https://api.edukconecta.com/api'
   }
 
   return LOCAL_API_BASE

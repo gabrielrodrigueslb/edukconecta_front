@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         pathname: '/uploads/**',
       },
       {
+        protocol: 'https',
+        hostname: 'api.edukconecta.com',
+        pathname: '/uploads/**',
+      },
+      {
         protocol: 'http',
         hostname: '192.168.15.9',
       },

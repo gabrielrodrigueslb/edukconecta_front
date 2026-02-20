@@ -10,6 +10,7 @@ import {
   ChevronRight,
   X,
   LayoutDashboard,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -105,6 +106,13 @@ export default function Sidebar({
   const fallbackAvatar =
     resolveTenantAsset(tenantPublic?.defaultAvatarUrl || tenant?.defaultAvatarUrl) ||
     '/globo.png';
+  const [resolvedAvatar, setResolvedAvatar] = useState<string>(
+    avatarSrc || fallbackAvatar,
+  );
+
+  useEffect(() => {
+    setResolvedAvatar(avatarSrc || fallbackAvatar);
+  }, [avatarSrc, fallbackAvatar]);
   const logoSrc =
     resolveTenantAsset(tenantPublic?.logoUrl) || '/logo.png';
 
@@ -116,6 +124,9 @@ export default function Sidebar({
     { name: 'Calendario', icon: Calendar, page: '/main/calendario' },
     { name: 'Documentos', icon: FileText, page: '/main/documentos' },
     { name: 'Avisos', icon: Bell, page: '/main/avisos' },
+    ...(user?.role === 'SUPER_ADMIN'
+      ? [{ name: 'Admin', icon: Shield, page: '/main/admin' }]
+      : []),
   ];
   return (
     <>
@@ -192,7 +203,15 @@ export default function Sidebar({
                 <DropdownMenuTrigger asChild>
                   <button className="flex flex-1 items-center gap-3 p-3 rounded-xl bg-sidebar-accent text-left transition-colors hover:bg-sidebar-border overflow-hidden">
                     <div className="w-10 h-10 rounded-full bg-linear-to-br from-(--brand-gradient-from-light) to-(--brand-gradient-to-light) flex items-center justify-center text-white font-semibold overflow-hidden">
-                      <img src={avatarSrc || fallbackAvatar} alt="" />
+                      <img
+                        src={resolvedAvatar}
+                        alt=""
+                        onError={() => {
+                          if (resolvedAvatar !== fallbackAvatar) {
+                            setResolvedAvatar(fallbackAvatar);
+                          }
+                        }}
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-sidebar-foreground truncate">

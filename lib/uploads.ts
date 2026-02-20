@@ -17,7 +17,7 @@ export function getUploadsBaseUrl() {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    return ''
+    return 'https://api.edukconecta.com'
   }
 
   return LOCAL_UPLOADS_BASE
