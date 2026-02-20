@@ -414,45 +414,45 @@ export default function AdminPage() {
           <div className="px-6 pb-6">
             <div className="flex flex-col md:flex-row gap-8">
               
-              {/* Avatar e Logo Column */}
+              {/* Logo e Avatar Column */}
               <div className="flex flex-col gap-4 -mt-12 md:-mt-16 z-10 w-full md:w-auto shrink-0">
-                {/* Avatar */}
+                {/* Logo */}
                 <div className="relative group w-32 h-32 mx-auto md:mx-0">
                   <div className="w-full h-full rounded-full border-4 border-white bg-white shadow-md overflow-hidden">
-                    <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={logoSrc} alt="Logo" className="w-full h-full object-cover" />
                   </div>
-                  <label htmlFor="avatar-upload" className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
+                  <label htmlFor="logo-upload" className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity">
                     <Camera className="w-8 h-8" />
                   </label>
                   <input 
-                    id="avatar-upload" 
-                    name="avatar" 
+                    id="logo-upload" 
+                    name="logo" 
                     type="file" 
                     accept="image/*" 
                     className="hidden" 
-                    onChange={handlePreviewChange(setAvatarPreview)} 
+                    onChange={handlePreviewChange(setLogoPreview)} 
                   />
-                  <div className="absolute -bottom-2 -right-2 bg-indigo-500 text-white p-1.5 rounded-full border-2 border-white" title="Avatar Padrão">
+                  <div className="absolute -bottom-2 -right-2 bg-indigo-500 text-white p-1.5 rounded-full border-2 border-white" title="Logo da Escola">
                     <Users className="w-4 h-4" />
                   </div>
                 </div>
 
-                {/* Logo Upload Box */}
+                {/* Avatar Upload Box */}
                 <div className="mt-2">
-                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block text-center md:text-left">Logo do Sistema</Label>
+                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block text-center md:text-left">Avatar Padrão</Label>
                   <div className="relative group h-20 w-full md:w-48 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer overflow-hidden">
-                     <img src={logoSrc} alt="Logo" className="max-h-14 max-w-[90%] object-contain p-1" />
-                     <label htmlFor="logo-upload" className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-indigo-600 text-xs font-medium">
+                     <img src={avatarSrc} alt="Avatar" className="max-h-14 max-w-[90%] object-contain p-1" />
+                     <label htmlFor="avatar-upload" className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-indigo-600 text-xs font-medium">
                         <UploadCloud className="w-6 h-6 mb-1" />
-                        Alterar Logo
+                        Alterar Avatar
                      </label>
                      <input 
-                      id="logo-upload" 
-                      name="logo" 
+                      id="avatar-upload" 
+                      name="avatar" 
                       type="file" 
                       accept="image/*" 
                       className="hidden" 
-                      onChange={handlePreviewChange(setLogoPreview)} 
+                      onChange={handlePreviewChange(setAvatarPreview)} 
                     />
                   </div>
                 </div>
