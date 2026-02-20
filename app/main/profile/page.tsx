@@ -13,6 +13,7 @@ import PageTitle from '@/components/page-title'
 import { getSession } from '@/lib/auth'
 import { withUploadsBase } from '@/lib/uploads'
 import { getApiBaseUrl } from '@/lib/apiBase'
+import { getTenantHeaders } from '@/lib/tenantSlug'
 
 interface UserData {
   id?: string
@@ -105,6 +106,7 @@ export default function ProfilePage() {
         credentials: 'include',
         headers: {
           'x-api-key': apiKey,
+          ...getTenantHeaders(),
         },
       })
 
@@ -157,6 +159,7 @@ export default function ProfilePage() {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
+          ...getTenantHeaders(),
         },
         body: JSON.stringify({
           current_password: passwordForm.current,
