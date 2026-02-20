@@ -116,6 +116,8 @@ export default function Sidebar({
   const logoSrc =
     resolveTenantAsset(tenantPublic?.logoUrl) || '/logo.png';
 
+  const canSeeAvisos = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, page: '/main' },
     { name: 'Alunos', icon: Users, page: '/main/alunos' },
@@ -123,7 +125,7 @@ export default function Sidebar({
     { name: 'Turmas', icon: GraduationCap, page: '/main/turmas' },
     { name: 'Calendario', icon: Calendar, page: '/main/calendario' },
     { name: 'Documentos', icon: FileText, page: '/main/documentos' },
-    { name: 'Avisos', icon: Bell, page: '/main/avisos' },
+    ...(canSeeAvisos ? [{ name: 'Avisos', icon: Bell, page: '/main/avisos' }] : []),
     ...(user?.role === 'SUPER_ADMIN'
       ? [{ name: 'Admin', icon: Shield, page: '/main/admin' }]
       : []),

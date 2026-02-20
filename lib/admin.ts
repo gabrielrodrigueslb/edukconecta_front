@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './apiBase';
+import { getTenantHeaders } from './tenantSlug';
 
 export type AdminTenant = {
   id: string;
@@ -31,6 +32,9 @@ export async function listCurrentTenantUsers(): Promise<{
   const res = await fetch(`${apiBase}/admin/users`, {
     method: 'GET',
     credentials: 'include',
+    headers: {
+      ...getTenantHeaders(),
+    },
   });
 
   if (!res.ok) {
@@ -45,6 +49,9 @@ export async function updateCurrentTenant(formData: FormData): Promise<AdminTena
   const res = await fetch(`${apiBase}/admin/tenant`, {
     method: 'PUT',
     credentials: 'include',
+    headers: {
+      ...getTenantHeaders(),
+    },
     body: formData,
   });
 
@@ -68,6 +75,7 @@ export async function createCurrentTenantUser(payload: {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...getTenantHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -90,6 +98,7 @@ export async function updateCurrentTenantUser(
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...getTenantHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -112,6 +121,7 @@ export async function resetCurrentTenantUserPassword(
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...getTenantHeaders(),
     },
     body: JSON.stringify({ password }),
   });
@@ -129,6 +139,9 @@ export async function deleteCurrentTenantUser(userId: string): Promise<void> {
   const res = await fetch(`${apiBase}/admin/users/${userId}`, {
     method: 'DELETE',
     credentials: 'include',
+    headers: {
+      ...getTenantHeaders(),
+    },
   });
 
   if (!res.ok) {

@@ -25,6 +25,8 @@ import {
   Loader2,
   Mail,
   Lock,
+  CheckCircle,
+  X,
   Camera,
   Image as ImageIcon,
   UploadCloud,
@@ -62,6 +64,25 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PageTitle from '@/components/page-title';
 
+const strongPasswordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+const passwordHint =
+  'Mínimo 8 caracteres, incluindo letra maiúscula, minúscula, número e símbolo.';
+
+function isStrongPassword(value: string) {
+  return strongPasswordRegex.test(value);
+}
+
+function getPasswordChecks(value: string) {
+  return {
+    minLength: value.length >= 8,
+    lower: /[a-z]/.test(value),
+    upper: /[A-Z]/.test(value),
+    number: /\d/.test(value),
+    symbol: /[^A-Za-z0-9]/.test(value),
+  };
+}
+
 export default function AdminPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -71,6 +92,8 @@ export default function AdminPage() {
   // Controle de Modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [createPassword, setCreatePassword] = useState('');
+  const [createPasswordFocused, setCreatePasswordFocused] = useState(false);
 
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editName, setEditName] = useState('');
@@ -82,6 +105,7 @@ export default function AdminPage() {
   const [resetPassword, setResetPassword] = useState('');
   const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [resetPasswordFocused, setResetPasswordFocused] = useState(false);
 
   const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
   const [tenantName, setTenantName] = useState('');
@@ -141,15 +165,23 @@ export default function AdminPage() {
     const payload = {
       name: String(formData.get('name') || ''),
       email: String(formData.get('email') || ''),
-      password: String(formData.get('password') || ''),
+      password: createPassword,
       role: String(formData.get('role') || 'USER'),
     };
+
+    if (!isStrongPassword(payload.password)) {
+      toast.error('Senha fraca. ' + passwordHint);
+      setCreatingUser(false);
+      return;
+    }
 
     try {
       await createCurrentTenantUser(payload);
       await reloadUsers();
       toast.success('Usuário criado com sucesso!');
       setIsCreateModalOpen(false);
+      setCreatePassword('');
+      setCreatePasswordFocused(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar usuário');
     } finally {
@@ -198,6 +230,11 @@ export default function AdminPage() {
       return;
     }
 
+    if (!isStrongPassword(resetPassword)) {
+      toast.error('Senha fraca. ' + passwordHint);
+      return;
+    }
+
     try {
       setResetLoading(true);
       await resetCurrentTenantUserPassword(resetUser.id, resetPassword);
@@ -205,6 +242,7 @@ export default function AdminPage() {
       setResetUser(null);
       setResetPassword('');
       setResetPasswordConfirm('');
+      setResetPasswordFocused(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao redefinir senha');
     } finally {
@@ -270,6 +308,8 @@ export default function AdminPage() {
   const logoSrc = logoPreview || resolveTenantAsset(tenant?.logoUrl) || '/logo.png';
   const avatarSrc = avatarPreview || resolveTenantAsset(tenant?.defaultAvatarUrl) || '/globo.png';
   const bannerSrc = bannerPreview || resolveTenantAsset(tenant?.loginBannerUrl) || '/banner-login.jpg';
+  const createPasswordChecks = getPasswordChecks(createPassword);
+  const resetPasswordChecks = getPasswordChecks(resetPassword);
 
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.active).length;
@@ -573,7 +613,16 @@ export default function AdminPage() {
       </div>
 
       {/* Modais permanecem iguais... */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog
+        open={isCreateModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreatePassword('');
+            setCreatePasswordFocused(false);
+          }
+          setIsCreateModalOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-800">
@@ -592,7 +641,45 @@ export default function AdminPage() {
             </div>
             <div>
               <Label className="text-slate-700 font-medium mb-2 block">Senha Inicial</Label>
-              <Input name="password" type="password" placeholder="••••••••" className="!h-12 rounded-xl" required />
+              <Input
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                className="!h-12 rounded-xl"
+                minLength={8}
+                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}"
+                title={passwordHint}
+                autoComplete="new-password"
+                value={createPassword}
+                onChange={(e) => setCreatePassword(e.target.value)}
+                onFocus={() => setCreatePasswordFocused(true)}
+                onBlur={() => setCreatePasswordFocused(false)}
+                required
+              />
+              {createPasswordFocused && (
+                <div className="text-xs mt-2 space-y-1">
+                  <p className={`flex items-center gap-2 ${createPasswordChecks.minLength ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {createPasswordChecks.minLength ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    8 caracteres
+                  </p>
+                  <p className={`flex items-center gap-2 ${createPasswordChecks.upper ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {createPasswordChecks.upper ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    letra maiúscula
+                  </p>
+                  <p className={`flex items-center gap-2 ${createPasswordChecks.lower ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {createPasswordChecks.lower ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    letra minúscula
+                  </p>
+                  <p className={`flex items-center gap-2 ${createPasswordChecks.number ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {createPasswordChecks.number ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    número
+                  </p>
+                  <p className={`flex items-center gap-2 ${createPasswordChecks.symbol ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {createPasswordChecks.symbol ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    símbolo
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-slate-700 font-medium mb-2 block">Permissão (Role)</Label>
@@ -660,7 +747,17 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(resetUser)} onOpenChange={(open) => !open && setResetUser(null)}>
+      <Dialog
+        open={Boolean(resetUser)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setResetUser(null);
+            setResetPassword('');
+            setResetPasswordConfirm('');
+            setResetPasswordFocused(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-800">
@@ -680,8 +777,38 @@ export default function AdminPage() {
                 value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
                 className="!h-12 rounded-xl"
+                minLength={8}
+                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}"
+                title={passwordHint}
+                autoComplete="new-password"
+                onFocus={() => setResetPasswordFocused(true)}
+                onBlur={() => setResetPasswordFocused(false)}
                 required
               />
+              {resetPasswordFocused && (
+                <div className="text-xs mt-2 space-y-1">
+                  <p className={`flex items-center gap-2 ${resetPasswordChecks.minLength ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {resetPasswordChecks.minLength ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    8 caracteres
+                  </p>
+                  <p className={`flex items-center gap-2 ${resetPasswordChecks.upper ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {resetPasswordChecks.upper ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    letra maiúscula
+                  </p>
+                  <p className={`flex items-center gap-2 ${resetPasswordChecks.lower ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {resetPasswordChecks.lower ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    letra minúscula
+                  </p>
+                  <p className={`flex items-center gap-2 ${resetPasswordChecks.number ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {resetPasswordChecks.number ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    número
+                  </p>
+                  <p className={`flex items-center gap-2 ${resetPasswordChecks.symbol ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {resetPasswordChecks.symbol ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    símbolo
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-slate-700 font-medium mb-2 block">Confirmar Senha</Label>
