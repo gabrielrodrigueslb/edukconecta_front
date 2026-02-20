@@ -90,6 +90,8 @@ export function LoginForm({
     SetOpenModal(!openModal);
   }
 
+  console.log('Tenant:', tenant);
+
   return (
     <>
       <div className={cn('flex flex-col gap-6', className)} {...props}>
@@ -102,6 +104,8 @@ export function LoginForm({
                     src={logoSrc}
                     width={80}
                     height={80}
+                    priority
+                    sizes="80px"
                     className="w-20 h-20 mb-2 self-center"
                     alt={tenant?.name ? `Logo ${tenant.name}` : 'Logo'}
                   />
@@ -158,7 +162,9 @@ export function LoginForm({
               <Image
                 src={bannerSrc}
                 alt="Image"
+                priority
                 fill
+                sizes="(min-width: 768px) 50vw, 100vw"
                 className="absolute inset-0 object-cover dark:brightness-[0.2] dark:grayscale"
               />
             </div>

@@ -15,6 +15,8 @@ const resolveUploadsBase = () => {
 
 const nextConfig: NextConfig = {
   images: {
+    // Allow local API images during dev (localhost/lan IPs).
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
     remotePatterns: [
       {
         protocol: 'http',
@@ -23,6 +25,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
+        port: '4457',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'demoeduk.localhost',
         port: '4457',
         pathname: '/uploads/**',
       },

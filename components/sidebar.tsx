@@ -20,6 +20,11 @@ import { cn } from '@/lib/utils';
 import { withUploadsBase } from '@/lib/uploads';
 import { getSession, type SessionUser, type TenantInfo } from '@/lib/auth';
 import {
+  getTenantPublic,
+  resolveTenantAsset,
+  type TenantPublic,
+} from '@/lib/tenant';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -38,6 +43,7 @@ export default function Sidebar({
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [tenantPublic, setTenantPublic] = useState<TenantPublic | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [openModalLogout, setOpenModalLogout] = useState(false);
 
@@ -46,31 +52,61 @@ export default function Sidebar({
   };
 
   useEffect(() => {
+    let mounted = true;
     async function getMe() {
       try {
-        const session = await getSession();
+        const [session, publicTenant] = await Promise.all([
+          getSession(),
+          getTenantPublic(),
+        ]);
 
         if (!session) {
           console.log('Usuario nao autenticado');
-          return;
+        } else if (mounted) {
+          setUser(session.user);
+          setTenant(session.tenant ?? null);
         }
 
-        setUser(session.user);
-        setTenant(session.tenant ?? null);
+        if (mounted) {
+          setTenantPublic(publicTenant ?? null);
+        }
       } catch {
         console.log('Erro ao buscar dados do usuario');
       } finally {
-        setTimeout(() => {
-          setLoadingAuth(false);
-        }, 105);
+        if (mounted) {
+          setTimeout(() => {
+            setLoadingAuth(false);
+          }, 105);
+        }
       }
     }
 
     getMe();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  useEffect(() => {
+    const favicon = resolveTenantAsset(tenantPublic?.faviconUrl);
+    if (!favicon) return;
+    let link = document.querySelector("link[rel~='icon']") as
+      | HTMLLinkElement
+      | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = favicon;
+  }, [tenantPublic?.faviconUrl]);
+
   const avatarSrc = withUploadsBase(user?.avatarUrl);
-  const fallbackAvatar = withUploadsBase(tenant?.defaultAvatarUrl) || '/globo.png';
+  const fallbackAvatar =
+    resolveTenantAsset(tenantPublic?.defaultAvatarUrl || tenant?.defaultAvatarUrl) ||
+    '/globo.png';
+  const logoSrc =
+    resolveTenantAsset(tenantPublic?.logoUrl) || '/logo.png';
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, page: '/main' },
@@ -100,11 +136,11 @@ export default function Sidebar({
         <div className="h-16 px-6 flex items-center justify-between border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-linear-to-br from-(--brand-gradient-from) to-(--brand-gradient-to) flex items-center justify-center shadow-lg shadow-[0_12px_25px_-10px_var(--sidebar-glow)] overflow-hidden border border-sidebar-border">
-              <Image src="/logo.png" alt="logo" width={40} height={40} />
+              <Image src={logoSrc} alt="logo" width={40} height={40} sizes="40px" />
             </div>
             <div>
               <h1 className="font-bold text-sidebar-primary-foreground">
-                {tenant?.name || 'Adriana Oliveira'}
+                {tenantPublic?.name || tenant?.name || 'Adriana Oliveira'}
               </h1>
               <p className="text-xs text-muted-foreground">Sistema de Gestao</p>
             </div>
@@ -149,21 +185,21 @@ export default function Sidebar({
           </div>
         </nav>
 
-        {user && (
+
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex flex-1 items-center gap-3 p-3 rounded-xl bg-sidebar-accent text-left transition-colors hover:bg-sidebar-border">
+                  <button className="flex flex-1 items-center gap-3 p-3 rounded-xl bg-sidebar-accent text-left transition-colors hover:bg-sidebar-border overflow-hidden">
                     <div className="w-10 h-10 rounded-full bg-linear-to-br from-(--brand-gradient-from-light) to-(--brand-gradient-to-light) flex items-center justify-center text-white font-semibold overflow-hidden">
                       <img src={avatarSrc || fallbackAvatar} alt="" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium text-sidebar-foreground truncate">
-                        {user.name || 'Usuario'}
+                        {(user?.name) || 'Usuario'}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {user.email}
+                        {(user?.email) || 'Email não disponível'}
                       </p>
                     </div>
                   </button>
@@ -185,7 +221,7 @@ export default function Sidebar({
               </DropdownMenu>
             </div>
           </div>
-        )}
+        
       </aside>
 
       <div className="fixed top-0 left-0 z-50">
@@ -196,4 +232,3 @@ export default function Sidebar({
     </>
   );
 }
-
