@@ -8,12 +8,13 @@ export const api = axios.create({
   timeout: 10000,
   headers: {
     'x-api-key': process.env.NEXT_PUBLIC_API_KEY,
+    'x-tenant' : process.env.NEXT_PUBLIC_TENANT_SLUG || resolveTenantSlug(),
   },
 });
 
-const tenantSlug = process.env.NEXT_PUBLIC_TENANT_SLUG;
+/* const tenantSlug = process.env.NEXT_PUBLIC_TENANT_SLUG;
 if (tenantSlug) {
   api.defaults.headers.common['x-tenant'] = tenantSlug;
 } else {
-  api.defaults.headers.common['x-tenant'] = resolveTenantSlug() || '';
-}
+  
+} */
