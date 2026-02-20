@@ -118,6 +118,7 @@ type Props = {
 
   onSave: () => void
   isSaving: boolean
+  showRequiredErrors?: boolean
 }
 
 function SectionCard({
@@ -167,6 +168,7 @@ export default function NewStudentModal({
   toggleSubject,
   onSave,
   isSaving,
+  showRequiredErrors = false,
 }: Props) {
   const age = useMemo(() => calcAge(studentData.birth_date), [studentData.birth_date])
 
@@ -265,8 +267,7 @@ export default function NewStudentModal({
 
                 <div className="hidden lg:block mt-5 rounded-2xl border bg-white/60 p-4">
                   <p className="text-xs text-slate-500">
-                    Dica: no desktop, o layout é mais “retangular” para reduzir rolagem.
-                    Complete uma seção por vez.
+                    Dica: Todos os campos marcados com <span className="text-destructive">*</span> são obrigatórios.<br/> Preencha o máximo de informações para um melhor acompanhamento do aluno!
                   </p>
                 </div>
               </div>
@@ -292,6 +293,10 @@ export default function NewStudentModal({
                           placeholder="Ex.: João Pedro Silva"
                           className="h-11"
                         />
+                        {showRequiredErrors && !studentData.full_name && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -306,6 +311,10 @@ export default function NewStudentModal({
                           }
                           className="h-11"
                         />
+                        {showRequiredErrors && !studentData.birth_date && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -332,6 +341,10 @@ export default function NewStudentModal({
                             ))}
                           </SelectContent>
                         </Select>
+                        {showRequiredErrors && !studentData.grade && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -353,6 +366,10 @@ export default function NewStudentModal({
                             ))}
                           </SelectContent>
                         </Select>
+                        {showRequiredErrors && !studentData.shift && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -368,6 +385,10 @@ export default function NewStudentModal({
                           className="h-11"
                           inputMode="numeric"
                         />
+                        {showRequiredErrors && !studentData.cpf && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="md:col-span-2 xl:col-span-3 space-y-2">
@@ -382,6 +403,10 @@ export default function NewStudentModal({
                           placeholder="Rua, número, bairro, cidade"
                           className="h-11"
                         />
+                        {showRequiredErrors && !studentData.address && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="md:col-span-2 xl:col-span-3 space-y-2">
@@ -413,10 +438,14 @@ export default function NewStudentModal({
                           className="h-11"
                           placeholder="Ex.: Maria Silva"
                         />
+                        {showRequiredErrors && !guardian1.full_name && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">CPF</Label>
+                        <Label className="text-sm font-medium">CPF <span className="text-destructive">*</span></Label>
                         <Input
                           value={formatCPF(guardian1.cpf)}
                           onChange={(e) => setGuardian1({ ...guardian1, cpf: onlyDigits(e.target.value) })}
@@ -424,6 +453,10 @@ export default function NewStudentModal({
                           placeholder="000.000.000-00"
                           inputMode="numeric"
                         />
+                        {showRequiredErrors && !guardian1.cpf && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -445,6 +478,10 @@ export default function NewStudentModal({
                             ))}
                           </SelectContent>
                         </Select>
+                        {showRequiredErrors && !guardian1.relationship && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2">
@@ -458,6 +495,10 @@ export default function NewStudentModal({
                           placeholder="(31) 9xxxx-xxxx"
                           inputMode="tel"
                         />
+                        {showRequiredErrors && !guardian1.phone && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                       </div>
 
                       <div className="space-y-2 md:col-span-2 xl:col-span-1">
@@ -495,16 +536,20 @@ export default function NewStudentModal({
                     <SectionCard title="Responsável 2" description="Contato secundário para emergências ou recados.">
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         <div className="md:col-span-2 xl:col-span-3 space-y-2">
-                          <Label className="text-sm font-medium">Nome completo</Label>
+                          <Label className="text-sm font-medium">Nome completo <span className="text-destructive">*</span></Label>
                           <Input
                             value={guardian2.full_name}
                             onChange={(e) => setGuardian2({ ...guardian2, full_name: e.target.value })}
                             className="h-11"
                           />
+                        {showRequiredErrors && hasGuardian2 && !guardian2.full_name && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">CPF</Label>
+                          <Label className="text-sm font-medium">CPF <span className="text-destructive">*</span></Label>
                           <Input
                             value={formatCPF(guardian2.cpf)}
                             onChange={(e) => setGuardian2({ ...guardian2, cpf: onlyDigits(e.target.value) })}
@@ -512,10 +557,14 @@ export default function NewStudentModal({
                             placeholder="000.000.000-00"
                             inputMode="numeric"
                           />
+                        {showRequiredErrors && hasGuardian2 && !guardian2.cpf && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">Parentesco</Label>
+                          <Label className="text-sm font-medium">Parentesco <span className="text-destructive">*</span></Label>
                           <Select
                             value={guardian2.relationship}
                             onValueChange={(v) => setGuardian2({ ...guardian2, relationship: v })}
@@ -531,10 +580,14 @@ export default function NewStudentModal({
                               ))}
                             </SelectContent>
                           </Select>
+                        {showRequiredErrors && hasGuardian2 && !guardian2.relationship && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">Telefone (WhatsApp)</Label>
+                          <Label className="text-sm font-medium">Telefone (WhatsApp) <span className="text-destructive">*</span></Label>
                           <Input
                             value={formatPhone(guardian2.phone)}
                             onChange={(e) => setGuardian2({ ...guardian2, phone: onlyDigits(e.target.value) })}
@@ -542,6 +595,10 @@ export default function NewStudentModal({
                             placeholder="(31) 9xxxx-xxxx"
                             inputMode="tel"
                           />
+                        {showRequiredErrors && hasGuardian2 && !guardian2.phone && (
+                          <p className="text-xs text-rose-600">Campo obrigatorio</p>
+                        )}
+
                         </div>
 
                         <div className="space-y-2 md:col-span-2 xl:col-span-1">

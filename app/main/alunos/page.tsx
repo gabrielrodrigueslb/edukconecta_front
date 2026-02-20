@@ -236,6 +236,7 @@ export default function Students() {
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false)
 
   const resetNewForm = useCallback(() => {
     setStudentData({
@@ -283,6 +284,7 @@ export default function Students() {
 
     setHasGuardian2(false)
     setActiveTab('data')
+    setShowRequiredErrors(false)
   }, [])
 
   const fetchStudents = useCallback(async () => {
@@ -370,6 +372,7 @@ export default function Students() {
   }, [])
 
   const handleSaveStudent = useCallback(async () => {
+    setShowRequiredErrors(true)
     if (!studentData.full_name || !studentData.birth_date || !studentData.grade || !studentData.shift) {
       toast.error('Preencha todos os campos obrigatórios na aba "Dados"')
       setActiveTab('data')
@@ -873,6 +876,7 @@ export default function Students() {
         toggleSubject={toggleSubject}
         onSave={handleSaveStudent}
         isSaving={isSaving}
+        showRequiredErrors={showRequiredErrors}
       />
 
       {/* Import Modal */}
