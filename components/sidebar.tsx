@@ -137,7 +137,7 @@ export default function Sidebar({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 h-screen w-72 bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 flex flex-col',
+          'fixed inset-y-0 left-0 h-[100dvh] w-72 bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 flex flex-col',
           'lg:static lg:h-dvh lg:translate-x-0 transition-transform duration-300',
           open ? 'translate-x-0 sidebar-animate' : '-translate-x-full',
         )}
@@ -202,7 +202,7 @@ export default function Sidebar({
           </div>
         </nav>
 
-        <div className="p-3 border-t border-sidebar-border mt-auto">
+        <div className="px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-sidebar-border mt-auto">
           <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button className="flex w-full items-center gap-3 p-2 rounded-xl bg-sidebar-accent hover:bg-sidebar-border transition-all cursor-pointer group outline-none ">
@@ -246,6 +246,7 @@ export default function Sidebar({
                 className="cursor-pointer gap-2"
                 onSelect={() => {
                   setUserMenuOpen(false);
+                  onOpenChange(false);
                   router.push('/main/profile');
                 }}
               >
@@ -259,6 +260,7 @@ export default function Sidebar({
                 className="cursor-pointer gap-2 text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                 onSelect={() => {
                   setUserMenuOpen(false);
+                  onOpenChange(false);
                   toggleModalLogout();
                 }}
               >
