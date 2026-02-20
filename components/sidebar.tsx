@@ -11,7 +11,10 @@ import {
   X,
   LayoutDashboard,
   Shield,
+  ChevronsUpDown,
+  User,
 } from 'lucide-react';
+
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -51,6 +54,7 @@ export default function Sidebar({
   );
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [openModalLogout, setOpenModalLogout] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const toggleModalLogout = () => {
     setOpenModalLogout(!openModalLogout);
@@ -94,8 +98,9 @@ export default function Sidebar({
 
   const avatarSrc = withUploadsBase(user?.avatarUrl);
   const fallbackAvatar =
-    resolveTenantAsset(tenantPublic?.defaultAvatarUrl || tenant?.defaultAvatarUrl) ||
-    '/globo.png';
+    resolveTenantAsset(
+      tenantPublic?.defaultAvatarUrl || tenant?.defaultAvatarUrl,
+    ) || '/globo.png';
   const [resolvedAvatar, setResolvedAvatar] = useState<string>(
     avatarSrc || fallbackAvatar,
   );
@@ -103,8 +108,7 @@ export default function Sidebar({
   useEffect(() => {
     setResolvedAvatar(avatarSrc || fallbackAvatar);
   }, [avatarSrc, fallbackAvatar]);
-  const logoSrc =
-    resolveTenantAsset(tenantPublic?.logoUrl) || '/logo.png';
+  const logoSrc = resolveTenantAsset(tenantPublic?.logoUrl) || '/logo.png';
 
   const canSeeAvisos = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
@@ -115,7 +119,9 @@ export default function Sidebar({
     { name: 'Turmas', icon: GraduationCap, page: '/main/turmas' },
     { name: 'Calendario', icon: Calendar, page: '/main/calendario' },
     { name: 'Documentos', icon: FileText, page: '/main/documentos' },
-    ...(canSeeAvisos ? [{ name: 'Avisos', icon: Bell, page: '/main/avisos' }] : []),
+    ...(canSeeAvisos
+      ? [{ name: 'Avisos', icon: Bell, page: '/main/avisos' }]
+      : []),
     ...(user?.role === 'SUPER_ADMIN'
       ? [{ name: 'Admin', icon: Shield, page: '/main/admin' }]
       : []),
@@ -139,7 +145,13 @@ export default function Sidebar({
         <div className="h-16 px-6 flex items-center justify-between border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-linear-to-br from-(--brand-gradient-from) to-(--brand-gradient-to) flex items-center justify-center shadow-lg shadow-[0_12px_25px_-10px_var(--sidebar-glow)] overflow-hidden border border-sidebar-border">
-              <Image src={logoSrc} alt="logo" width={40} height={40} sizes="40px" />
+              <Image
+                src={logoSrc}
+                alt="logo"
+                width={40}
+                height={40}
+                sizes="40px"
+              />
             </div>
             <div>
               <h1 className="font-bold text-sidebar-primary-foreground">
@@ -177,7 +189,9 @@ export default function Sidebar({
                   <Icon
                     className={cn(
                       'w-5 h-5 transition-transform group-hover:scale-110',
-                      isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground group-hover:text-sidebar-accent-foreground',
+                      isActive
+                        ? 'text-sidebar-primary-foreground'
+                        : 'text-muted-foreground group-hover:text-sidebar-accent-foreground',
                     )}
                   />
                   <span className="font-medium">{item.name}</span>
@@ -188,51 +202,72 @@ export default function Sidebar({
           </div>
         </nav>
 
-
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex flex-1 items-center gap-3 p-3 rounded-xl bg-sidebar-accent text-left transition-colors hover:bg-sidebar-border overflow-hidden">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-(--brand-gradient-from-light) to-(--brand-gradient-to-light) flex items-center justify-center text-white font-semibold overflow-hidden">
-                      <img
-                        src={resolvedAvatar}
-                        alt=""
-                        onError={() => {
-                          if (resolvedAvatar !== fallbackAvatar) {
-                            setResolvedAvatar(fallbackAvatar);
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sidebar-foreground truncate">
-                        {(user?.name) || 'Usuario'}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {(user?.email) || 'Email não disponível'}
-                      </p>
-                    </div>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-54">
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      router.push('/main/profile');
+        <div className="p-3 border-t border-sidebar-border mt-auto">
+          <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center gap-3 p-2 rounded-xl bg-sidebar-accent hover:bg-sidebar-border transition-all cursor-pointer group outline-none ">
+                {/* Avatar - shrink-0 impede que ele seja esmagado pelo texto longo */}
+                <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--brand-gradient-from-light)] to-[var(--brand-gradient-to-light)] flex items-center justify-center text-white font-semibold overflow-hidden shadow-sm border border-sidebar-border/50">
+                  <img
+                    src={resolvedAvatar}
+                    alt={user?.name || 'Avatar'}
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      if (resolvedAvatar !== fallbackAvatar) {
+                        setResolvedAvatar(fallbackAvatar);
+                      }
                     }}
-                  >
-                    Editar perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={toggleModalLogout}>
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        
+                  />
+                </div>
+
+                {/* Textos - min-w-0 e flex-1 permitem que o truncate funcione perfeitamente */}
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-semibold text-sidebar-foreground truncate leading-tight group-hover:text-background">
+                    {user?.name || 'Usuário'}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {user?.email || 'Email não disponível'}
+                  </p>
+                </div>
+
+                {/* Ícone de indicação de menu (Melhora muito a UX) */}
+                <ChevronsUpDown className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-sidebar-foreground transition-colors ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+
+            {/* Ajuste de alinhamento e largura do menu para ficar mais elegante */}
+            <DropdownMenuContent
+              align="end"
+              side="top"
+              sideOffset={8}
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl"
+            >
+              <DropdownMenuItem
+                className="cursor-pointer gap-2"
+                onSelect={() => {
+                  setUserMenuOpen(false);
+                  router.push('/main/profile');
+                }}
+              >
+                <User className="w-4 h-4 text-muted-foreground" />
+                Editar perfil
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className="cursor-pointer gap-2 text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                onSelect={() => {
+                  setUserMenuOpen(false);
+                  toggleModalLogout();
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </aside>
 
       <div className="fixed top-0 left-0 z-50">

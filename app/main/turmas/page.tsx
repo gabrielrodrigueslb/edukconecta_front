@@ -466,7 +466,7 @@ export default function TurmasPage() {
                     setFormData({ ...formData, status: value })
                   }
                 >
-                  <SelectTrigger className="mt-2 h-12 rounded-xl w-full">
+                  <SelectTrigger className="mt-2 !h-12 rounded-xl w-full">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>

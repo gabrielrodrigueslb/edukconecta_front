@@ -641,7 +641,7 @@ export default function AdminPage() {
               Novo Usuário
             </DialogTitle>
           </DialogHeader>
-          <form className="space-y-4 pt-4" onSubmit={handleCreateUser}>
+          <form className="space-y-4 pt-4" onSubmit={handleCreateUser} noValidate>
             <div>
               <Label className="text-slate-700 font-medium mb-2 block">Nome Completo</Label>
               <Input name="name" placeholder="Ex: João da Silva" className="!h-12 rounded-xl" required />
@@ -657,9 +657,6 @@ export default function AdminPage() {
                 type="password"
                 placeholder="••••••••"
                 className="!h-12 rounded-xl"
-                minLength={8}
-                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}"
-                title={passwordHint}
                 autoComplete="new-password"
                 value={createPassword}
                 onChange={(e) => setCreatePassword(e.target.value)}
@@ -776,7 +773,7 @@ export default function AdminPage() {
               Redefinir Senha
             </DialogTitle>
           </DialogHeader>
-          <form className="space-y-4 pt-4" onSubmit={handleResetPassword}>
+          <form className="space-y-4 pt-4" onSubmit={handleResetPassword} noValidate>
             <div className="p-3 bg-amber-50 text-amber-800 text-sm rounded-xl mb-4">
               Você está redefinindo a senha de <strong>{resetUser?.name}</strong>.
             </div>
@@ -788,9 +785,6 @@ export default function AdminPage() {
                 value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
                 className="!h-12 rounded-xl"
-                minLength={8}
-                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}"
-                title={passwordHint}
                 autoComplete="new-password"
                 onFocus={() => setResetPasswordFocused(true)}
                 onBlur={() => setResetPasswordFocused(false)}

@@ -680,7 +680,7 @@ export default function TurmaDetalhesPage() {
                 value={formData.status}
                 onValueChange={(value: 'Ativa' | 'Inativa') => setFormData({ ...formData, status: value })}
               >
-                <SelectTrigger className="mt-2 h-12 rounded-xl">
+                <SelectTrigger className="mt-2 !h-12 rounded-xl w-full">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>

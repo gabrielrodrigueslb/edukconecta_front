@@ -177,7 +177,7 @@ export default function NewStudentModal({
           'p-0 overflow-hidden',
           'max-w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl',
           'max-h-[90vh]',
-          'flex flex-col' // ✅ essencial: modal como flex-col
+          'flex flex-col gap-0' // ✅ essencial: modal como flex-col
         )}
       >
         {/* Header Premium */}
