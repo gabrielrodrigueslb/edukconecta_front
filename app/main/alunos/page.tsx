@@ -301,13 +301,28 @@ export default function Students() {
     fetchStudents()
   }, [fetchStudents])
 
+  const normalizeText = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       if (filters.search && !student.full_name?.toLowerCase().includes(filters.search.toLowerCase())) return false
       if (filters.grade && student.grade !== filters.grade) return false
       if (filters.shift && student.shift !== filters.shift) return false
       if (filters.status && student.status !== filters.status) return false
-      if (filters.difficulty && !student.difficulty_subjects?.includes(filters.difficulty)) return false
+      if (filters.difficulty) {
+        const normalizedFilter = normalizeText(filters.difficulty)
+        const subjects = student.difficulty_subjects || []
+        const hasMatch = subjects.some((subject) =>
+          normalizeText(subject).includes(normalizedFilter),
+        )
+        if (!hasMatch) return false
+      }
       return true
     })
   }, [students, filters])
