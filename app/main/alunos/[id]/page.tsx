@@ -69,9 +69,15 @@ import Image from 'next/image';
 import PageTitle from '@/components/page-title';
 import { toast } from 'sonner';
 import { StudentsService, StudentResponse } from '@/services/students.service';
-import { AttendanceService, AttendanceRecord } from '@/services/attendance.service';
+import {
+  AttendanceService,
+  AttendanceRecord,
+} from '@/services/attendance.service';
 import { GradesService, GradeRecord } from '@/services/grades.service';
-import { StudentDocumentsService, StudentDocument } from '@/services/student-documents.service';
+import {
+  StudentDocumentsService,
+  StudentDocument,
+} from '@/services/student-documents.service';
 
 const createPageUrl = (path: string) => {
   return `/main/alunos/${path}`;
@@ -96,7 +102,9 @@ export default function StudentProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [student, setStudent] = useState<StudentResponse | null>(null);
   const [guardians, setGuardians] = useState<any[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
   const [grades, setGrades] = useState<GradeRecord[]>([]);
   const [openGradeModal, setOpenGradeModal] = useState(false);
   const [isSavingGrade, setIsSavingGrade] = useState(false);
@@ -108,7 +116,8 @@ export default function StudentProfile() {
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [openDocumentModal, setOpenDocumentModal] = useState(false);
-  const [documentToDelete, setDocumentToDelete] = useState<StudentDocument | null>(null);
+  const [documentToDelete, setDocumentToDelete] =
+    useState<StudentDocument | null>(null);
   const [documentForm, setDocumentForm] = useState({
     name: '',
     type: 'OUTRO',
@@ -192,7 +201,9 @@ export default function StudentProfile() {
 
   const attendanceFiltered = React.useMemo(() => {
     if (!attendanceSearch) return attendanceSorted;
-    return attendanceSorted.filter((record) => record.date === attendanceSearch);
+    return attendanceSorted.filter(
+      (record) => record.date === attendanceSearch,
+    );
   }, [attendanceSearch, attendanceSorted]);
 
   React.useEffect(() => {
@@ -200,10 +211,17 @@ export default function StudentProfile() {
   }, [attendanceSearch, attendancePageSize]);
 
   const attendanceTotal = attendanceFiltered.length;
-  const attendancePages = Math.max(1, Math.ceil(attendanceTotal / attendancePageSize));
+  const attendancePages = Math.max(
+    1,
+    Math.ceil(attendanceTotal / attendancePageSize),
+  );
   const attendanceSafePage = Math.min(attendancePage, attendancePages);
-  const attendanceStart = attendanceTotal === 0 ? 0 : (attendanceSafePage - 1) * attendancePageSize;
-  const attendanceEnd = Math.min(attendanceStart + attendancePageSize, attendanceTotal);
+  const attendanceStart =
+    attendanceTotal === 0 ? 0 : (attendanceSafePage - 1) * attendancePageSize;
+  const attendanceEnd = Math.min(
+    attendanceStart + attendancePageSize,
+    attendanceTotal,
+  );
   const attendancePageItems = React.useMemo(
     () => attendanceFiltered.slice(attendanceStart, attendanceEnd),
     [attendanceFiltered, attendanceStart, attendanceEnd],
@@ -224,7 +242,7 @@ export default function StudentProfile() {
       color: 'text-emerald-600',
       bg: 'bg-emerald-100',
     },
-    'Atenção': { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-100' },
+    Atenção: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-100' },
     Decaindo: { icon: TrendingDown, color: 'text-rose-600', bg: 'bg-rose-100' },
     'Não avaliado': {
       icon: AlertCircle,
@@ -241,17 +259,17 @@ export default function StudentProfile() {
 
       const response = await fetch(url);
       if (!response.ok) throw new Error('Falha ao baixar arquivo');
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = filename; // Isso força o download com o nome correto
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       window.URL.revokeObjectURL(blobUrl);
       toast.success('Download concluÃ­do!');
     } catch (error) {
@@ -294,12 +312,20 @@ export default function StudentProfile() {
   const PerfIcon = perf.icon;
 
   const studentGrades = grades.filter((g) => g.student_id === student.id);
-  const gradesBySubject = studentGrades.reduce<Record<string, GradeRecord[]>>((acc, grade) => {
-    acc[grade.subject] = acc[grade.subject] ? [...acc[grade.subject], grade] : [grade];
-    return acc;
-  }, {});
+  const gradesBySubject = studentGrades.reduce<Record<string, GradeRecord[]>>(
+    (acc, grade) => {
+      acc[grade.subject] = acc[grade.subject]
+        ? [...acc[grade.subject], grade]
+        : [grade];
+      return acc;
+    },
+    {},
+  );
   const overallAverage = studentGrades.length
-    ? (studentGrades.reduce((sum, g) => sum + g.grade, 0) / studentGrades.length).toFixed(1)
+    ? (
+        studentGrades.reduce((sum, g) => sum + g.grade, 0) /
+        studentGrades.length
+      ).toFixed(1)
     : '--';
 
   const handleAddGrade = async () => {
@@ -338,7 +364,9 @@ export default function StudentProfile() {
     { value: 'OUTRO', label: 'Outro' },
   ];
 
-  const handleDocumentFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setDocumentForm((prev) => ({
@@ -376,7 +404,13 @@ export default function StudentProfile() {
   };
 
   const resetDocumentForm = () => {
-    setDocumentForm({ name: '', type: 'OUTRO', year: '', notes: '', file: null });
+    setDocumentForm({
+      name: '',
+      type: 'OUTRO',
+      year: '',
+      notes: '',
+      file: null,
+    });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -389,7 +423,9 @@ export default function StudentProfile() {
     if (!studentId || !documentToDelete) return;
     try {
       await StudentDocumentsService.remove(studentId, documentToDelete.id);
-      setDocuments((prev) => prev.filter((doc) => doc.id !== documentToDelete.id));
+      setDocuments((prev) =>
+        prev.filter((doc) => doc.id !== documentToDelete.id),
+      );
       toast.success('Documento removido.');
     } catch {
       toast.error('Erro ao remover documento.');
@@ -401,619 +437,660 @@ export default function StudentProfile() {
   return (
     <>
       <div className="space-y-6 max-w-4xl mx-auto p-1 sm:p-6 ">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push('/main/alunos')}
-            className="rounded-xl"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <PageTitle
-            title="Ficha do Aluno"
-            className="text-2xl lg:text-3xl font-bold text-slate-800"
-          />
-        </div>
-        <div className="flex gap-3">
-          <Link href={createPageUrl(`StudentForm?id=${student.id}`)}>
-            <Button className="bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) rounded-xl text-white">
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push('/main/alunos')}
+              className="rounded-xl"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-          </Link>
+            <PageTitle
+              title="Ficha do Aluno"
+              className="text-2xl lg:text-3xl font-bold text-slate-800"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Link href={createPageUrl(`StudentForm?id=${student.id}`)}>
+              <Button className="bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) rounded-xl text-white">
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {/* Main Info Card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) p-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
-              {student.foto_aluno ? (
-                <Image
-                  src={student.foto_aluno}
-                  alt={student.full_name || 'Foto do aluno'}
-                  width={80}
-                  height={80}
-                  unoptimized
-                />
-              ) : (
-                <span>{student.full_name?.charAt(0)?.toUpperCase()}</span>
-              )}
-            </div>
-            <div className="text-white">
-              <h2 className="text-2xl font-bold">{student.full_name}</h2>
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
-                  {student.grade}
-                </Badge>
-                <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
-                  {student.shift}
-                </Badge>
-                {age && (
-                  <span className="text-white/80 text-sm font-medium">
-                    {age} anos
-                  </span>
+        {/* Main Info Card */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-linear-to-r from-(--brand-gradient-from) to-(--brand-gradient-to) p-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
+                {student.foto_aluno ? (
+                  <Image
+                    src={student.foto_aluno}
+                    alt={student.full_name || 'Foto do aluno'}
+                    width={80}
+                    height={80}
+                    unoptimized
+                  />
+                ) : (
+                  <span>{student.full_name?.charAt(0)?.toUpperCase()}</span>
                 )}
+              </div>
+              <div className="text-white">
+                <h2 className="text-2xl font-bold">{student.full_name}</h2>
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
+                    {student.grade}
+                  </Badge>
+                  <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
+                    {student.shift}
+                  </Badge>
+                  {age && (
+                    <span className="text-white/80 text-sm font-medium">
+                      {age} anos
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Performance */}
-          <div
-            className={cn(
-              'p-4 rounded-xl flex items-center gap-4 transition-colors',
-              perf.bg,
-            )}
-          >
-            <PerfIcon className={cn('w-8 h-8', perf.color)} />
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Desempenho</p>
-              <p className={cn('font-bold text-lg', perf.color)}>
-                {student.performance_indicator || 'Não avaliado'}
-              </p>
-            </div>
-          </div>
-
-          {/* Attendance Rate */}
-          <div className="p-4 rounded-xl bg-blue-50 flex items-center gap-4">
-            <Calendar className="w-8 h-8 text-blue-600" />
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Frequência</p>
-              <p className="font-bold text-lg text-blue-600">
-                {attendanceRate}%
-              </p>
-            </div>
-          </div>
-
-          {/* Status */}
-          <div
-            className={cn(
-              'p-4 rounded-xl flex items-center gap-4',
-              student.status === 'Ativo' ? 'bg-emerald-50' : 'bg-slate-100',
-            )}
-          >
-            <User
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Performance */}
+            <div
               className={cn(
-                'w-8 h-8',
-                student.status === 'Ativo'
-                  ? 'text-emerald-600'
-                  : 'text-slate-500',
+                'p-4 rounded-xl flex items-center gap-4 transition-colors',
+                perf.bg,
               )}
-            />
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Situação</p>
-              <p
+            >
+              <PerfIcon className={cn('w-8 h-8', perf.color)} />
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Desempenho</p>
+                <p className={cn('font-bold text-lg', perf.color)}>
+                  {student.performance_indicator || 'Não avaliado'}
+                </p>
+              </div>
+            </div>
+
+            {/* Attendance Rate */}
+            <div className="p-4 rounded-xl bg-blue-50 flex items-center gap-4">
+              <Calendar className="w-8 h-8 text-blue-600" />
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Frequência</p>
+                <p className="font-bold text-lg text-blue-600">
+                  {attendanceRate}%
+                </p>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div
+              className={cn(
+                'p-4 rounded-xl flex items-center gap-4',
+                student.status === 'Ativo' ? 'bg-emerald-50' : 'bg-slate-100',
+              )}
+            >
+              <User
                 className={cn(
-                  'font-bold text-lg',
+                  'w-8 h-8',
                   student.status === 'Ativo'
                     ? 'text-emerald-600'
                     : 'text-slate-500',
                 )}
-              >
-                {student.status}
-              </p>
+              />
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Situação</p>
+                <p
+                  className={cn(
+                    'font-bold text-lg',
+                    student.status === 'Ativo'
+                      ? 'text-emerald-600'
+                      : 'text-slate-500',
+                  )}
+                >
+                  {student.status}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Boletim integrado */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Boletim</h3>
-            <p className="text-sm text-slate-500">Notas por disciplina e bimestre</p>
+        {/* Boletim integrado */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">Boletim</h3>
+              <p className="text-sm text-slate-500">
+                Notas por disciplina e bimestre
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-slate-100 text-slate-700">
+                Média geral: {overallAverage}
+              </Badge>
+              <Button
+                onClick={() => setOpenGradeModal(true)}
+                className="bg-linear-to-r from-(--brand-gradient-from) to-[var(--brand-gradient-to)] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar nota
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge className="bg-slate-100 text-slate-700">
-              Média geral: {overallAverage}
-            </Badge>
-            <Button
-              onClick={() => setOpenGradeModal(true)}
-              className="bg-linear-to-r from-(--brand-gradient-from) to-[var(--brand-gradient-to)] text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar nota
-            </Button>
-          </div>
-        </div>
 
-        {studentGrades.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-6 text-center text-slate-500">
-            Nenhuma nota cadastrada para este aluno.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 border-b">
-                  <th className="py-2 pr-4">Disciplina</th>
-                  <th className="py-2 pr-4">1º</th>
-                  <th className="py-2 pr-4">2º</th>
-                  <th className="py-2 pr-4">3º</th>
-                  <th className="py-2 pr-4">4º</th>
-                  <th className="py-2">Média</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(gradesBySubject).map(([subject, subjectGrades]) => {
-                  const bimMap = subjectGrades.reduce<Record<number, number>>((acc, g) => {
-                    acc[g.bimester] = g.grade;
-                    return acc;
-                  }, {});
-                  const avg =
-                    subjectGrades.reduce((sum, g) => sum + g.grade, 0) / subjectGrades.length;
-                  return (
-                    <tr key={subject} className="border-b last:border-0">
-                      <td className="py-2 pr-4 font-medium text-slate-800">{subject}</td>
-                      {[1, 2, 3, 4].map((b) => (
-                        <td key={b} className="py-2 pr-4 text-slate-600">
-                          {bimMap[b] ?? '--'}
-                        </td>
-                      ))}
-                      <td className="py-2 text-slate-700 font-semibold">{avg.toFixed(1)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Documentos do aluno (ALTERADO) */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Documentos do Aluno</h3>
-            <p className="text-sm text-slate-500">
-              Mostrando apenas documentos fixados na ficha do aluno.
-            </p>
-          </div>
-          <Button
-            onClick={handleOpenDocumentModal}
-            className="bg-linear-to-r from-(--brand-gradient-from) to-[var(--brand-gradient-to)] text-white"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Anexar documento
-          </Button>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          {documents.length === 0 ? (
+          {studentGrades.length === 0 ? (
             <div className="rounded-xl border border-dashed p-6 text-center text-slate-500">
-              Nenhum documento fixado para este aluno.
+              Nenhuma nota cadastrada para este aluno.
             </div>
           ) : (
-            documents.map((doc) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border shrink-0">
-                    <FileText className="w-5 h-5 text-slate-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-slate-800 truncate" title={doc.name}>
-                      {doc.name}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1 truncate">
-                      {doc.type}
-                      {doc.year ? ` â€¢ ${doc.year}` : ''}
-                      {doc.created_at
-                        ? ` â€¢ ${format(new Date(doc.created_at), "dd/MM/yyyy", { locale: ptBR })}`
-                        : ''}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Dropdown Menu com Download Forçado */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500">
-                      <MoreVertical className="w-4 h-4" />
-                      <span className="sr-only">Ações</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <a href={doc.url} target="_blank" rel="noreferrer" className="cursor-pointer">
-                        <Eye className="w-4 h-4 mr-2 text-slate-500" />
-                        Visualizar
-                      </a>
-                    </DropdownMenuItem>
-                    
-                    {/* Botão de Download com lógica fetch/blob */}
-                    <DropdownMenuItem 
-                      onClick={() => handleDownload(doc.url, doc.name)}
-                      disabled={isDownloading}
-                      className="cursor-pointer"
-                    >
-                      <Download className="w-4 h-4 mr-2 text-slate-500" />
-                      Baixar
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      className="text-rose-600 focus:text-rose-600 cursor-pointer"
-                      onClick={() => setDocumentToDelete(doc)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remover
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-500 border-b">
+                    <th className="py-2 pr-4">Disciplina</th>
+                    <th className="py-2 pr-4">1º</th>
+                    <th className="py-2 pr-4">2º</th>
+                    <th className="py-2 pr-4">3º</th>
+                    <th className="py-2 pr-4">4º</th>
+                    <th className="py-2">Média</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(gradesBySubject).map(
+                    ([subject, subjectGrades]) => {
+                      const bimMap = subjectGrades.reduce<
+                        Record<number, number>
+                      >((acc, g) => {
+                        acc[g.bimester] = g.grade;
+                        return acc;
+                      }, {});
+                      const avg =
+                        subjectGrades.reduce((sum, g) => sum + g.grade, 0) /
+                        subjectGrades.length;
+                      return (
+                        <tr key={subject} className="border-b last:border-0">
+                          <td className="py-2 pr-4 font-medium text-slate-800">
+                            {subject}
+                          </td>
+                          {[1, 2, 3, 4].map((b) => (
+                            <td key={b} className="py-2 pr-4 text-slate-600">
+                              {bimMap[b] ?? '--'}
+                            </td>
+                          ))}
+                          <td className="py-2 text-slate-700 font-semibold">
+                            {avg.toFixed(1)}
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Details Grid (O restante do código permanece igual) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Personal Info */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-            <User className="w-5 h-5 text-indigo-500" />
-            Dados Pessoais
-          </h3>
-          <div className="space-y-4 divide-y divide-slate-50">
-            <div className="pt-2">
-              <p className="text-sm text-slate-500 mb-1">Data de Nascimento</p>
-              <p className="font-medium text-slate-800">
-                {student.birth_date
-                  ? format(
-                      new Date(student.birth_date),
-                      "dd 'de' MMMM 'de' yyyy",
-                      { locale: ptBR },
-                    )
-                  : '-'}
+        {/* Documentos do aluno (ALTERADO) */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">
+                Documentos do Aluno
+              </h3>
+              <p className="text-sm text-slate-500">
+                Mostrando apenas documentos fixados na ficha do aluno.
               </p>
             </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">CPF</p>
-              <p className="font-medium text-slate-800">
-                {formatCPF(student.cpf)}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">Endereço</p>
-              <p className="font-medium text-slate-800">
-                {student.address || '-'}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">Escola de Origem</p>
-              <p className="font-medium text-slate-800">
-                {student.origin_school || '-'}
-              </p>
-            </div>
+            <Button
+              onClick={handleOpenDocumentModal}
+              className="bg-linear-to-r from-(--brand-gradient-from) to-[var(--brand-gradient-to)] text-white"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Anexar documento
+            </Button>
           </div>
-        </div>
 
-        {/* Health Info */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-            <Heart className="w-5 h-5 text-rose-500" />
-            Saúde
-          </h3>
-          <div className="space-y-4 divide-y divide-slate-50">
-            <div className="pt-2">
-              <p className="text-sm text-slate-500 mb-1">Tipo Sanguí­neo</p>
-              <p className="font-medium text-slate-800">
-                {student.blood_type || '-'}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">Alergias</p>
-              <p className="font-medium text-slate-800">
-                {student.allergies || 'Nenhuma registrada'}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">Medicamentos</p>
-              <p className="font-medium text-slate-800">
-                {student.medications || 'Nenhum'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Guardians */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-            <User className="w-5 h-5 text-purple-500" />
-            Responsáveis
-          </h3>
-          <div className="space-y-4">
-            {guardians.map((guardian) => (
-              <div
-                key={guardian.id}
-                className="p-4 rounded-xl bg-slate-50 border border-slate-100"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold text-slate-800">
-                    {guardian.full_name}
-                  </p>
-                  <Badge variant="outline" className="bg-white">
-                    {guardian.relationship}
-                  </Badge>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <p className="flex items-center gap-2 text-slate-600">
-                    <FileText className="w-4 h-4 text-slate-400" />
-                    {guardian.cpf ? formatCPF(guardian.cpf) : '-'}
-                  </p>
-                  <p className="flex items-center gap-2 text-slate-600">
-                    <Phone className="w-4 h-4 text-slate-400" />
-                    {guardian.phone}
-                  </p>
-                  {guardian.email && (
-                    <p className="flex items-center gap-2 text-slate-600">
-                      <Mail className="w-4 h-4 text-slate-400" />
-                      {guardian.email}
-                    </p>
-                  )}
-                  <p className="flex items-center gap-2 text-slate-600">
-                    <MapPin className="w-4 h-4 text-slate-400" />
-                    {guardian.address || '-'}
-                  </p>
-                </div>
+          <div className="mt-6 space-y-3">
+            {documents.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-center text-slate-500">
+                Nenhum documento fixado para este aluno.
               </div>
-            ))}
-            {guardians.length === 0 && (
-              <p className="text-slate-500 text-sm italic">
-                Nenhum responsável cadastrado
-              </p>
+            ) : (
+              documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border shrink-0">
+                      <FileText className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="font-semibold text-slate-800 truncate"
+                        title={doc.name}
+                      >
+                        {doc.name}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1 truncate">
+                        {doc.type}
+                        {doc.year ? `- ${doc.year}` : ''}
+                        {doc.created_at
+                          ? `- ${format(new Date(doc.created_at), 'dd/MM/yyyy', { locale: ptBR })}`
+                          : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dropdown Menu com Download Forçado */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-500"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                        <span className="sr-only">Ações</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="cursor-pointer"
+                        >
+                          <Eye className="w-4 h-4 mr-2 text-slate-500" />
+                          Visualizar
+                        </a>
+                      </DropdownMenuItem>
+
+                      {/* Botão de Download com lógica fetch/blob */}
+                      <DropdownMenuItem
+                        onClick={() => handleDownload(doc.url, doc.name)}
+                        disabled={isDownloading}
+                        className="cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 mr-2 text-slate-500" />
+                        Baixar
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        className="text-rose-600 focus:text-rose-600 cursor-pointer"
+                        onClick={() => setDocumentToDelete(doc)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))
             )}
           </div>
         </div>
 
-        {/* Pedagogical */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-            <BookOpen className="w-5 h-5 text-blue-500" />
-            Informações Pedagógicas
-          </h3>
-          <div className="space-y-4 divide-y divide-slate-50">
-            <div className="pt-2">
-              <p className="text-sm text-slate-500 mb-2">
-                Matérias com Dificuldade
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(student.difficulty_subjects || []).map(
-                  (subject: string, i: number) => (
-                    <Badge
-                      key={i}
-                      className="bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
-                    >
-                      {subject}
-                    </Badge>
-                  ),
-                )}
-                {(!student.difficulty_subjects ||
-                  student.difficulty_subjects.length === 0) && (
-                  <span className="text-slate-500 text-sm italic">
-                    Nenhuma registrada
-                  </span>
-                )}
+        {/* Details Grid (O restante do código permanece igual) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Personal Info */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
+            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+              <User className="w-5 h-5 text-indigo-500" />
+              Dados Pessoais
+            </h3>
+            <div className="space-y-4 divide-y divide-slate-50">
+              <div className="pt-2">
+                <p className="text-sm text-slate-500 mb-1">
+                  Data de Nascimento
+                </p>
+                <p className="font-medium text-slate-800">
+                  {student.birth_date
+                    ? format(
+                        new Date(student.birth_date),
+                        "dd 'de' MMMM 'de' yyyy",
+                        { locale: ptBR },
+                      )
+                    : '-'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">CPF</p>
+                <p className="font-medium text-slate-800">
+                  {formatCPF(student.cpf)}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">Endereço</p>
+                <p className="font-medium text-slate-800">
+                  {student.address || '-'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">Escola de Origem</p>
+                <p className="font-medium text-slate-800">
+                  {student.origin_school || '-'}
+                </p>
               </div>
             </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">
-                Reação às dificuldades
-              </p>
-              <p className="font-medium text-slate-800">
-                {student.difficulty_reaction || '-'}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">
-                Observações de comportamento
-              </p>
-              <p className="font-medium text-slate-800">
-                {student.behavior_notes || '-'}
-              </p>
-            </div>
-            <div className="pt-4">
-              <p className="text-sm text-slate-500 mb-1">Fez reforço antes?</p>
-              <p className="font-medium text-slate-800">
-                {student.previous_tutoring ? 'Sim' : 'Não'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Attendance Summary */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-          <Clock className="w-5 h-5 text-indigo-500" />
-          Resumo de Frequência
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50 text-center border border-slate-100">
-            <p className="text-3xl font-bold text-slate-800">
-              {attendanceStats.total}
-            </p>
-            <p className="text-sm text-slate-500 font-medium mt-1">
-              Total de aulas
-            </p>
-          </div>
-          <div className="p-4 rounded-xl bg-emerald-50 text-center border border-emerald-100">
-            <p className="text-3xl font-bold text-emerald-600">
-              {attendanceStats.present}
-            </p>
-            <p className="text-sm text-emerald-600/80 font-medium mt-1">
-              Presenças
-            </p>
-          </div>
-          <div className="p-4 rounded-xl bg-rose-50 text-center border border-rose-100">
-            <p className="text-3xl font-bold text-rose-600">
-              {attendanceStats.absent}
-            </p>
-            <p className="text-sm text-rose-600/80 font-medium mt-1">Faltas</p>
-          </div>
-          <div className="p-4 rounded-xl bg-amber-50 text-center border border-amber-100">
-            <p className="text-3xl font-bold text-amber-600">
-              {attendanceStats.justified}
-            </p>
-            <p className="text-sm text-amber-600/80 font-medium mt-1">
-              Justificadas
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Attendance Details */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-          <div>
-            <h3 className="font-semibold text-slate-800 text-lg">Chamadas do aluno</h3>
-            <p className="text-sm text-slate-500">
-              Registro diário de presença, faltas e justificativas.
-            </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={attendanceSearch}
-                onChange={(e) => setAttendanceSearch(e.target.value)}
-                className="h-10 rounded-xl"
-              />
-              {attendanceSearch ? (
-                <Button
-                  variant="outline"
-                  className="h-10 rounded-xl"
-                  onClick={() => setAttendanceSearch('')}
-                >
-                  Limpar
-                </Button>
-              ) : null}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Por página</span>
-              <Select
-                value={String(attendancePageSize)}
-                onValueChange={(value) => setAttendancePageSize(Number(value))}
-              >
-                <SelectTrigger className="h-10 w-24 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 30, 50].map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Health Info */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
+            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+              <Heart className="w-5 h-5 text-rose-500" />
+              Saúde
+            </h3>
+            <div className="space-y-4 divide-y divide-slate-50">
+              <div className="pt-2">
+                <p className="text-sm text-slate-500 mb-1">Tipo Sanguí­neo</p>
+                <p className="font-medium text-slate-800">
+                  {student.blood_type || '-'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">Alergias</p>
+                <p className="font-medium text-slate-800">
+                  {student.allergies || 'Nenhuma registrada'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">Medicamentos</p>
+                <p className="font-medium text-slate-800">
+                  {student.medications || 'Nenhum'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <p className="text-sm text-slate-500">
-            {attendanceTotal === 0
-              ? 'Nenhuma chamada registrada'
-              : `Mostrando ${attendanceStart + 1}-${attendanceEnd} de ${attendanceTotal}`}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="h-9 rounded-xl"
-              disabled={attendanceSafePage <= 1}
-              onClick={() => setAttendancePage((p) => Math.max(1, p - 1))}
-            >
-              Anterior
-            </Button>
-            <span className="text-sm text-slate-500">
-              {attendanceSafePage} / {attendancePages}
-            </span>
-            <Button
-              variant="outline"
-              className="h-9 rounded-xl"
-              disabled={attendanceSafePage >= attendancePages}
-              onClick={() =>
-                setAttendancePage((p) => Math.min(attendancePages, p + 1))
-              }
-            >
-              Próxima
-            </Button>
-          </div>
-        </div>
-
-        {attendanceTotal === 0 ? (
-          <div className="rounded-xl border border-dashed p-6 text-center text-slate-500">
-            Nenhum registro encontrado para o período.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {attendancePageItems.map((record) => {
-              const statusClass =
-                record.status === 'Presente'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : record.status === 'Ausente'
-                    ? 'bg-rose-100 text-rose-700'
-                    : 'bg-amber-100 text-amber-700'
-              return (
+          {/* Guardians */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
+            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+              <User className="w-5 h-5 text-purple-500" />
+              Responsáveis
+            </h3>
+            <div className="space-y-4">
+              {guardians.map((guardian) => (
                 <div
-                  key={record.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                  key={guardian.id}
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-100"
                 >
-                  <div>
+                  <div className="flex items-center justify-between mb-2">
                     <p className="font-semibold text-slate-800">
-                      {record.date
-                        ? format(new Date(`${record.date}T12:00:00`), 'dd/MM/yyyy', {
-                            locale: ptBR,
-                          })
-                        : '-'}
+                      {guardian.full_name}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {record.shift ? `Turno: ${record.shift}` : 'Turno não informado'}
-                    </p>
-                    {record.justification ? (
-                      <p className="text-xs text-slate-500 mt-1">
-                        Justificativa: {record.justification}
-                      </p>
-                    ) : null}
+                    <Badge variant="outline" className="bg-white">
+                      {guardian.relationship}
+                    </Badge>
                   </div>
-                  <Badge className={statusClass}>{record.status}</Badge>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex items-center gap-2 text-slate-600">
+                      <FileText className="w-4 h-4 text-slate-400" />
+                      {guardian.cpf ? formatCPF(guardian.cpf) : '-'}
+                    </p>
+                    <p className="flex items-center gap-2 text-slate-600">
+                      <Phone className="w-4 h-4 text-slate-400" />
+                      {guardian.phone}
+                    </p>
+                    {guardian.email && (
+                      <p className="flex items-center gap-2 text-slate-600">
+                        <Mail className="w-4 h-4 text-slate-400" />
+                        {guardian.email}
+                      </p>
+                    )}
+                    <p className="flex items-center gap-2 text-slate-600">
+                      <MapPin className="w-4 h-4 text-slate-400" />
+                      {guardian.address || '-'}
+                    </p>
+                  </div>
                 </div>
-              )
-            })}
+              ))}
+              {guardians.length === 0 && (
+                <p className="text-slate-500 text-sm italic">
+                  Nenhum responsável cadastrado
+                </p>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Pedagogical */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 h-full">
+            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+              <BookOpen className="w-5 h-5 text-blue-500" />
+              Informações Pedagógicas
+            </h3>
+            <div className="space-y-4 divide-y divide-slate-50">
+              <div className="pt-2">
+                <p className="text-sm text-slate-500 mb-2">
+                  Matérias com Dificuldade
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(student.difficulty_subjects || []).map(
+                    (subject: string, i: number) => (
+                      <Badge
+                        key={i}
+                        className="bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
+                      >
+                        {subject}
+                      </Badge>
+                    ),
+                  )}
+                  {(!student.difficulty_subjects ||
+                    student.difficulty_subjects.length === 0) && (
+                    <span className="text-slate-500 text-sm italic">
+                      Nenhuma registrada
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">
+                  Reação às dificuldades
+                </p>
+                <p className="font-medium text-slate-800">
+                  {student.difficulty_reaction || '-'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">
+                  Observações de comportamento
+                </p>
+                <p className="font-medium text-slate-800">
+                  {student.behavior_notes || '-'}
+                </p>
+              </div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500 mb-1">
+                  Fez reforço antes?
+                </p>
+                <p className="font-medium text-slate-800">
+                  {student.previous_tutoring ? 'Sim' : 'Não'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance Summary */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+            <Clock className="w-5 h-5 text-indigo-500" />
+            Resumo de Frequência
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 text-center border border-slate-100">
+              <p className="text-3xl font-bold text-slate-800">
+                {attendanceStats.total}
+              </p>
+              <p className="text-sm text-slate-500 font-medium mt-1">
+                Total de aulas
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-50 text-center border border-emerald-100">
+              <p className="text-3xl font-bold text-emerald-600">
+                {attendanceStats.present}
+              </p>
+              <p className="text-sm text-emerald-600/80 font-medium mt-1">
+                Presenças
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-rose-50 text-center border border-rose-100">
+              <p className="text-3xl font-bold text-rose-600">
+                {attendanceStats.absent}
+              </p>
+              <p className="text-sm text-rose-600/80 font-medium mt-1">
+                Faltas
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-amber-50 text-center border border-amber-100">
+              <p className="text-3xl font-bold text-amber-600">
+                {attendanceStats.justified}
+              </p>
+              <p className="text-sm text-amber-600/80 font-medium mt-1">
+                Justificadas
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance Details */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="font-semibold text-slate-800 text-lg">
+                Chamadas do aluno
+              </h3>
+              <p className="text-sm text-slate-500">
+                Registro diário de presença, faltas e justificativas.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={attendanceSearch}
+                  onChange={(e) => setAttendanceSearch(e.target.value)}
+                  className="h-10 rounded-xl"
+                />
+                {attendanceSearch ? (
+                  <Button
+                    variant="outline"
+                    className="h-10 rounded-xl"
+                    onClick={() => setAttendanceSearch('')}
+                  >
+                    Limpar
+                  </Button>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-500">Por página</span>
+                <Select
+                  value={String(attendancePageSize)}
+                  onValueChange={(value) =>
+                    setAttendancePageSize(Number(value))
+                  }
+                >
+                  <SelectTrigger className="h-10 w-24 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[10, 20, 30, 50].map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <p className="text-sm text-slate-500">
+              {attendanceTotal === 0
+                ? 'Nenhuma chamada registrada'
+                : `Mostrando ${attendanceStart + 1}-${attendanceEnd} de ${attendanceTotal}`}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="h-9 rounded-xl"
+                disabled={attendanceSafePage <= 1}
+                onClick={() => setAttendancePage((p) => Math.max(1, p - 1))}
+              >
+                Anterior
+              </Button>
+              <span className="text-sm text-slate-500">
+                {attendanceSafePage} / {attendancePages}
+              </span>
+              <Button
+                variant="outline"
+                className="h-9 rounded-xl"
+                disabled={attendanceSafePage >= attendancePages}
+                onClick={() =>
+                  setAttendancePage((p) => Math.min(attendancePages, p + 1))
+                }
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+
+          {attendanceTotal === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-center text-slate-500">
+              Nenhum registro encontrado para o período.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {attendancePageItems.map((record) => {
+                const statusClass =
+                  record.status === 'Presente'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : record.status === 'Ausente'
+                      ? 'bg-rose-100 text-rose-700'
+                      : 'bg-amber-100 text-amber-700';
+                return (
+                  <div
+                    key={record.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-800">
+                        {record.date
+                          ? format(
+                              new Date(`${record.date}T12:00:00`),
+                              'dd/MM/yyyy',
+                              {
+                                locale: ptBR,
+                              },
+                            )
+                          : '-'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {record.shift
+                          ? `Turno: ${record.shift}`
+                          : 'Turno não informado'}
+                      </p>
+                      {record.justification ? (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Justificativa: {record.justification}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Badge className={statusClass}>{record.status}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
       {/* Modal de nota */}
       <Dialog open={openGradeModal} onOpenChange={setOpenGradeModal}>
@@ -1026,7 +1103,9 @@ export default function StudentProfile() {
               <Label>Disciplina</Label>
               <Input
                 value={gradeForm.subject}
-                onChange={(e) => setGradeForm({ ...gradeForm, subject: e.target.value })}
+                onChange={(e) =>
+                  setGradeForm({ ...gradeForm, subject: e.target.value })
+                }
                 className="mt-2"
                 placeholder="Ex: Matemática"
               />
@@ -1036,7 +1115,9 @@ export default function StudentProfile() {
                 <Label>Bimestre</Label>
                 <Select
                   value={gradeForm.bimester}
-                  onValueChange={(value) => setGradeForm({ ...gradeForm, bimester: value })}
+                  onValueChange={(value) =>
+                    setGradeForm({ ...gradeForm, bimester: value })
+                  }
                 >
                   <SelectTrigger className="mt-2 w-full">
                     <SelectValue />
@@ -1055,7 +1136,9 @@ export default function StudentProfile() {
                   type="number"
                   step="0.1"
                   value={gradeForm.grade}
-                  onChange={(e) => setGradeForm({ ...gradeForm, grade: e.target.value })}
+                  onChange={(e) =>
+                    setGradeForm({ ...gradeForm, grade: e.target.value })
+                  }
                   className="mt-2"
                   placeholder="Ex: 8.5"
                 />
@@ -1088,7 +1171,9 @@ export default function StudentProfile() {
               <Label>Nome do documento</Label>
               <Input
                 value={documentForm.name}
-                onChange={(e) => setDocumentForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setDocumentForm((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="Ex.: Autorização de saÃ­da"
                 className="h-11"
               />
@@ -1098,7 +1183,9 @@ export default function StudentProfile() {
               <Label>Tipo</Label>
               <Select
                 value={documentForm.type}
-                onValueChange={(value) => setDocumentForm((prev) => ({ ...prev, type: value }))}
+                onValueChange={(value) =>
+                  setDocumentForm((prev) => ({ ...prev, type: value }))
+                }
               >
                 <SelectTrigger className="h-11 w-full">
                   <SelectValue />
@@ -1118,7 +1205,9 @@ export default function StudentProfile() {
               <Input
                 type="number"
                 value={documentForm.year}
-                onChange={(e) => setDocumentForm((prev) => ({ ...prev, year: e.target.value }))}
+                onChange={(e) =>
+                  setDocumentForm((prev) => ({ ...prev, year: e.target.value }))
+                }
                 placeholder="2026"
                 className="h-11"
               />
@@ -1133,7 +1222,9 @@ export default function StudentProfile() {
                 className="h-11 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               />
               {documentForm.file?.name ? (
-                <p className="text-xs text-slate-500">Selecionado: {documentForm.file.name}</p>
+                <p className="text-xs text-slate-500">
+                  Selecionado: {documentForm.file.name}
+                </p>
               ) : null}
             </div>
 
@@ -1141,14 +1232,22 @@ export default function StudentProfile() {
               <Label>Observação</Label>
               <Textarea
                 value={documentForm.notes}
-                onChange={(e) => setDocumentForm((prev) => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) =>
+                  setDocumentForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
                 className="min-h-24"
                 placeholder="Ex.: entregue pelos pais, válido até..."
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDocumentModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setOpenDocumentModal(false)}
+            >
               Cancelar
             </Button>
             <Button
@@ -1163,17 +1262,24 @@ export default function StudentProfile() {
       </Dialog>
 
       {/* Confirmação de remoção de documento */}
-      <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
+      <AlertDialog
+        open={!!documentToDelete}
+        onOpenChange={() => setDocumentToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover documento?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não poderá ser desfeita. O arquivo será excluÃ­do do registro do aluno.
+              Esta ação não poderá ser desfeita. O arquivo será excluÃ­do do
+              registro do aluno.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-rose-500 hover:bg-rose-600" onClick={handleRemoveDocument}>
+            <AlertDialogAction
+              className="bg-rose-500 hover:bg-rose-600"
+              onClick={handleRemoveDocument}
+            >
               Remover
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1182,5 +1288,3 @@ export default function StudentProfile() {
     </>
   );
 }
-
-
